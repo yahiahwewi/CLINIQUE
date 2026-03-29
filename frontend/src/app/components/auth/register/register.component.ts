@@ -37,10 +37,27 @@ export class RegisterComponent implements OnInit {
     const password = control.get('password');
     const confirmPassword = control.get('confirmPassword');
 
-    if (password && confirmPassword && password.value !== confirmPassword.value) {
-      confirmPassword.setErrors({ passwordMismatch: true });
+    if (!password || !confirmPassword) {
+      return null;
+    }
+
+    if (!confirmPassword.value) {
+      return null;
+    }
+
+    if (password.value !== confirmPassword.value) {
+      confirmPassword.setErrors({
+        ...(confirmPassword.errors ?? {}),
+        passwordMismatch: true
+      });
       return { passwordMismatch: true };
     }
+
+    if (confirmPassword.errors?.['passwordMismatch']) {
+      const { passwordMismatch, ...remainingErrors } = confirmPassword.errors;
+      confirmPassword.setErrors(Object.keys(remainingErrors).length ? remainingErrors : null);
+    }
+
     return null;
   }
 
@@ -57,14 +74,22 @@ export class RegisterComponent implements OnInit {
     }
 
     this.loading = true;
+    this.registerForm.patchValue({
+      firstName: this.f['firstName'].value.trim(),
+      lastName: this.f['lastName'].value.trim(),
+      email: this.f['email'].value.trim().toLowerCase()
+    }, { emitEvent: false });
+
     this.authService.register(this.registerForm.value).subscribe({
       next: (response) => {
         this.loading = false;
-        this.router.navigate(['/dashboard']);
+        this.router.navigateByUrl(this.authService.getDefaultRoute(response));
       },
       error: (error) => {
         this.loading = false;
-        this.error = error.error?.message || 'Registration failed. Please try again.';
+        this.error = error.error?.errors
+          ? Object.values(error.error.errors)[0] as string
+          : error.error?.message || 'Registration failed. Please try again.';
       }
     });
   }

@@ -13,5 +13,8 @@ public class UserStatisticsDTO {
     private long totalUsers;
     private long activeUsers;
     private long inactiveUsers;
+    private long totalAppointments;
+    private long pendingAppointments;
+    private long acceptedAppointments;
 }
 

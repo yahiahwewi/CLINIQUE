@@ -1,144 +1,161 @@
-<div class="max-w-7xl mx-auto">
-  <div class="flex justify-between items-center mb-8">
-    <h1 class="text-4xl font-bold text-gray-800">User Management</h1>
-    <button
-      (click)="openForm()"
-      class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition"
-    >
-      + Add User
+<div class="space-y-6">
+  <div class="flex flex-col gap-4 rounded-3xl bg-slate-900 px-8 py-8 text-white lg:flex-row lg:items-end lg:justify-between">
+    <div>
+      <p class="text-sm uppercase tracking-[0.25em] text-sky-200">Account Management</p>
+      <h1 class="mt-3 text-3xl font-bold">Staff and User Accounts</h1>
+      <p class="mt-2 max-w-2xl text-sm text-slate-200">Create and manage patients, doctors, nurses, and admins from one place.</p>
+    </div>
+    <button (click)="openCreateForm()" class="rounded-2xl bg-sky-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300">
+      Add Account
     </button>
   </div>
 
-  <!-- Messages -->
-  <div *ngIf="success" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+  <div *ngIf="success" class="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
     {{ success }}
   </div>
-  <div *ngIf="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+
+  <div *ngIf="error" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
     {{ error }}
   </div>
 
-  <!-- Loading -->
-  <div *ngIf="loading" class="text-center py-8">
-    <p class="text-gray-600">Loading users...</p>
+  <div *ngIf="loading && users.length === 0" class="rounded-2xl bg-white p-8 text-center text-slate-500 shadow-sm">
+    Loading users...
   </div>
 
-  <!-- Table -->
-  <div *ngIf="!loading" class="bg-white rounded-lg shadow-sm overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
+  <div *ngIf="users.length > 0" class="overflow-hidden rounded-2xl bg-white shadow-sm">
+    <table class="min-w-full divide-y divide-slate-200">
+      <thead class="bg-slate-50">
         <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roles</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Name</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Email</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Roles</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-100">
-        <tr *ngFor="let user of users" class="hover:bg-blue-50 transition-colors">
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm font-medium text-gray-900">{{ user.firstName }} {{ user.lastName }}</div>
+      <tbody class="divide-y divide-slate-100">
+        <tr *ngFor="let user of users" class="hover:bg-slate-50">
+          <td class="px-6 py-4 text-sm font-medium text-slate-900">{{ user.firstName }} {{ user.lastName }}</td>
+          <td class="px-6 py-4 text-sm text-slate-600">{{ user.email }}</td>
+          <td class="px-6 py-4 text-sm text-slate-600">
+            <div class="flex flex-wrap gap-2">
+              <span *ngFor="let role of user.roles" class="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
+                {{ role.name }}
+              </span>
+            </div>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.email }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm">
-            <span *ngFor="let role of user.roles" class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium mr-1">
-              {{ role.name }}
-            </span>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm">
-            <button (click)="toggleStatus(user)" [ngClass]="user.enabled ? 'text-green-600' : 'text-red-600'" class="font-medium hover:underline">
-              {{ user.enabled ? 'Active' : 'Locked' }}
+          <td class="px-6 py-4 text-sm">
+            <button (click)="toggleStatus(user)" class="rounded-full px-3 py-1 text-xs font-semibold" [ngClass]="user.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
+              {{ user.enabled ? 'Enabled' : 'Disabled' }}
             </button>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-            <button (click)="openForm(user)" class="text-indigo-600 hover:text-indigo-900">Edit</button>
-            <button (click)="openPasswordForm(user)" class="text-amber-600 hover:text-amber-900">Password</button>
-            <button (click)="deleteUser(user.id, user.firstName + ' ' + user.lastName)" class="text-red-600 hover:text-red-900">Delete</button>
+          <td class="px-6 py-4 text-sm font-medium">
+            <div class="flex flex-wrap gap-3">
+              <button (click)="openEditForm(user)" class="text-sky-700 hover:text-sky-900">Edit</button>
+              <button (click)="openPasswordForm(user)" class="text-amber-600 hover:text-amber-800">Password</button>
+              <button (click)="deleteUser(user)" class="text-rose-600 hover:text-rose-800">Delete</button>
+            </div>
           </td>
         </tr>
       </tbody>
     </table>
-
-    <!-- No Users -->
-    <div *ngIf="users.length === 0 && !loading" class="text-center py-12">
-      <p class="text-gray-600">No users found</p>
-    </div>
   </div>
 
-  <!-- Modal Form -->
-  <div *ngIf="showForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6">{{ editingUser ? 'Edit User' : 'Add User' }}</h2>
-
-      <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
-        <div *ngIf="editingUser" class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Email (read-only)</label>
-          <input type="text" formControlName="email" class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500" />
+  <div *ngIf="showForm" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+    <div class="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
+      <div class="mb-6 flex items-start justify-between">
+        <div>
+          <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Account Form</p>
+          <h2 class="mt-2 text-2xl font-bold text-slate-900">{{ editingUser ? 'Edit Account' : 'Create Account' }}</h2>
         </div>
+        <button (click)="closeForm()" class="rounded-full bg-slate-100 px-3 py-1 text-slate-500 hover:bg-slate-200">Close</button>
+      </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-4">
+      <form [formGroup]="userForm" (ngSubmit)="submitUser()" class="space-y-5">
+        <div class="grid gap-5 md:grid-cols-2">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-            <input type="text" formControlName="firstName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+            <label class="mb-2 block text-sm font-medium text-slate-700">First Name</label>
+            <input formControlName="firstName" type="text" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-            <input type="text" formControlName="lastName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+            <label class="mb-2 block text-sm font-medium text-slate-700">Last Name</label>
+            <input formControlName="lastName" type="text" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500" />
           </div>
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Roles</label>
-          <div class="space-y-2">
-            <label *ngFor="let role of availableRoles" class="flex items-center">
-              <input type="checkbox"
-                     [value]="role"
-                     (change)="onRoleChange(role, $any($event.target).checked)"
-                     [checked]="userForm.get('roles')?.value.includes(role)"
-                     class="rounded text-indigo-600" />
-              <span class="ml-2 text-sm text-gray-600">{{ role }}</span>
+        <div class="grid gap-5 md:grid-cols-2">
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-700">Email</label>
+            <input formControlName="email" type="email" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500 disabled:bg-slate-100" />
+          </div>
+          <div *ngIf="!editingUser">
+            <label class="mb-2 block text-sm font-medium text-slate-700">Password</label>
+            <input formControlName="password" type="password" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Roles</label>
+          <div class="grid gap-3 md:grid-cols-2">
+            <label *ngFor="let role of availableRoles" class="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3">
+              <input
+                type="checkbox"
+                [checked]="userForm.get('roles')?.value?.includes(role)"
+                (change)="onRoleChange(role, $any($event.target).checked)"
+              />
+              <span class="text-sm text-slate-700">{{ role }}</span>
             </label>
           </div>
         </div>
 
-        <div class="mb-6">
-          <label class="flex items-center cursor-pointer">
-            <input type="checkbox" formControlName="enabled" class="rounded text-indigo-600 w-5 h-5" />
-            <span class="ml-3 text-sm font-medium text-gray-700">Account Enabled</span>
-          </label>
-        </div>
+        <label class="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3">
+          <input formControlName="enabled" type="checkbox" />
+          <span class="text-sm text-slate-700">Account enabled</span>
+        </label>
 
-        <div class="flex gap-4">
-          <button type="submit" [disabled]="loading || userForm.invalid" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition disabled:bg-gray-400">Update</button>
-          <button type="button" (click)="closeForm()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition">Cancel</button>
+        <div class="flex gap-3">
+          <button type="submit" [disabled]="loading" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60">
+            {{ editingUser ? 'Save Changes' : 'Create Account' }}
+          </button>
+          <button type="button" (click)="closeForm()" class="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            Cancel
+          </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Password Reset Modal -->
-  <div *ngIf="showPasswordForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
-      <h2 class="text-2xl font-bold text-gray-800 mb-2">Reset Password</h2>
-      <p class="text-gray-600 mb-6 text-sm">Resetting password for {{ editingUser?.email }}</p>
-
-      <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()">
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-          <input type="password" formControlName="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" />
+  <div *ngIf="showPasswordForm" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+    <div class="w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl">
+      <div class="mb-6 flex items-start justify-between">
+        <div>
+          <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Security</p>
+          <h2 class="mt-2 text-2xl font-bold text-slate-900">Reset Password</h2>
         </div>
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-          <input type="password" formControlName="confirmPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" />
-          <p *ngIf="passwordForm.errors?.['mismatch']" class="text-red-500 text-xs mt-1">Passwords do not match</p>
+        <button (click)="closeForm()" class="rounded-full bg-slate-100 px-3 py-1 text-slate-500 hover:bg-slate-200">Close</button>
+      </div>
+
+      <form [formGroup]="passwordForm" (ngSubmit)="submitPassword()" class="space-y-5">
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">New Password</label>
+          <input formControlName="password" type="password" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-amber-500" />
         </div>
 
-        <div class="flex gap-4">
-          <button type="submit" [disabled]="loading || passwordForm.invalid" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg transition disabled:bg-gray-400">Reset</button>
-          <button type="button" (click)="closeForm()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition">Cancel</button>
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Confirm Password</label>
+          <input formControlName="confirmPassword" type="password" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-amber-500" />
+          <p *ngIf="passwordForm.errors?.['mismatch']" class="mt-2 text-xs text-rose-600">Passwords do not match.</p>
+        </div>
+
+        <div class="flex gap-3">
+          <button type="submit" [disabled]="loading" class="rounded-2xl bg-amber-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:opacity-60">
+            Update Password
+          </button>
+          <button type="button" (click)="closeForm()" class="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            Cancel
+          </button>
         </div>
       </form>
     </div>
   </div>
 </div>
-

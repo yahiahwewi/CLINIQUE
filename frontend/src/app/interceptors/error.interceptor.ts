@@ -4,19 +4,27 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NotificationService } from '../services/notification.service';
+import { AuthService } from '../services/auth.service';
 
 @Injectable()
 export class ErrorInterceptor implements HttpInterceptor {
   constructor(
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
+        const isAuthRequest = request.url.includes('/auth/login') || request.url.includes('/auth/register');
+
         if (error.status === 401) {
-          // Unauthorized - redirect to login
+          if (isAuthRequest) {
+            return throwError(() => error);
+          }
+
+          this.authService.clearSession();
           this.router.navigate(['/login']);
           this.notificationService.error('Your session has expired. Please login again.');
         } else if (error.status === 403) {

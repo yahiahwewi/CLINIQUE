@@ -1,0 +1,89 @@
+<div class="space-y-6">
+  <div class="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-teal-900 px-8 py-8 text-white shadow-[0_30px_80px_-30px_rgba(15,118,110,0.8)]">
+    <div class="absolute right-0 top-0 h-40 w-40 translate-x-10 -translate-y-10 rounded-full bg-teal-300/15 blur-3xl"></div>
+    <div class="relative">
+      <p class="text-sm uppercase tracking-[0.25em] text-sky-200">Admin Overview</p>
+      <h1 class="mt-3 text-3xl font-bold">Hospital Control Panel</h1>
+      <p class="mt-2 max-w-2xl text-sm text-slate-200">Track account health and appointment flow from one dashboard.</p>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a routerLink="/dashboard/admin/users" class="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+          Manage Accounts
+        </a>
+        <a routerLink="/dashboard/appointments" class="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15">
+          Review Appointments
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    {{ error }}
+  </div>
+
+  <div *ngIf="loading" class="rounded-2xl bg-white p-8 text-center text-slate-500 shadow-sm">
+    Loading statistics...
+  </div>
+
+  <div *ngIf="!loading && stats" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div class="rounded-2xl bg-white p-6 shadow-sm">
+      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Users</p>
+      <p class="mt-3 text-4xl font-bold text-slate-900">{{ stats.totalUsers }}</p>
+      <p class="mt-2 text-sm text-slate-500">Total accounts in the system</p>
+    </div>
+    <div class="rounded-2xl bg-white p-6 shadow-sm">
+      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Active</p>
+      <p class="mt-3 text-4xl font-bold text-emerald-600">{{ stats.activeUsers }}</p>
+      <p class="mt-2 text-sm text-slate-500">Enabled accounts ready to log in</p>
+    </div>
+    <div class="rounded-2xl bg-white p-6 shadow-sm">
+      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Inactive</p>
+      <p class="mt-3 text-4xl font-bold text-rose-600">{{ stats.inactiveUsers }}</p>
+      <p class="mt-2 text-sm text-slate-500">Accounts currently disabled</p>
+    </div>
+    <div class="rounded-2xl bg-white p-6 shadow-sm">
+      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Appointments</p>
+      <p class="mt-3 text-4xl font-bold text-slate-900">{{ stats.totalAppointments }}</p>
+      <p class="mt-2 text-sm text-slate-500">All appointments on record</p>
+    </div>
+    <div class="rounded-2xl bg-white p-6 shadow-sm">
+      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Pending</p>
+      <p class="mt-3 text-4xl font-bold text-amber-500">{{ stats.pendingAppointments }}</p>
+      <p class="mt-2 text-sm text-slate-500">Awaiting doctor action</p>
+    </div>
+    <div class="rounded-2xl bg-white p-6 shadow-sm">
+      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Accepted</p>
+      <p class="mt-3 text-4xl font-bold text-sky-600">{{ stats.acceptedAppointments }}</p>
+      <p class="mt-2 text-sm text-slate-500">Confirmed appointments</p>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && stats" class="grid gap-5 lg:grid-cols-2">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Operations Health</p>
+      <h2 class="mt-3 text-xl font-semibold text-slate-900">What needs attention</h2>
+      <ul class="mt-4 space-y-3 text-sm text-slate-600">
+        <li class="rounded-xl bg-slate-50 px-4 py-3">
+          Pending appointments:
+          <span class="font-semibold text-slate-900">{{ stats.pendingAppointments }}</span>
+        </li>
+        <li class="rounded-xl bg-slate-50 px-4 py-3">
+          Disabled accounts:
+          <span class="font-semibold text-slate-900">{{ stats.inactiveUsers }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Suggested Actions</p>
+      <h2 class="mt-3 text-xl font-semibold text-slate-900">Fast paths</h2>
+      <div class="mt-4 grid gap-3">
+        <a routerLink="/dashboard/admin/users" class="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+          Open account management
+        </a>
+        <a routerLink="/dashboard/appointments" class="rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+          Open appointment workspace
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

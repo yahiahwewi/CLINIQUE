@@ -5,18 +5,17 @@ import com.example.demo.dto.LoginRequest;
 import com.example.demo.dto.RegisterRequest;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
-import com.example.demo.mapper.UserMapper;
 import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.JwtUtil;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,37 +27,41 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
-    private final UserMapper userMapper;
 
     public AuthService(UserRepository userRepository, RoleRepository roleRepository,
                       PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager,
-                      JwtUtil jwtUtil, UserDetailsService userDetailsService, UserMapper userMapper) {
+                      JwtUtil jwtUtil, UserDetailsService userDetailsService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
-        this.userMapper = userMapper;
     }
 
     public AuthResponse register(RegisterRequest registerRequest) {
+        String normalizedEmail = normalizeEmail(registerRequest.getEmail());
+        String normalizedFirstName = normalizeText(registerRequest.getFirstName());
+        String normalizedLastName = normalizeText(registerRequest.getLastName());
+        String password = registerRequest.getPassword();
+        String confirmPassword = registerRequest.getConfirmPassword();
+
         // Validate passwords match
-        if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
+        if (!password.equals(confirmPassword)) {
             throw new IllegalArgumentException("Passwords do not match");
         }
 
         // Check if email already exists
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new IllegalArgumentException("Email already in use");
         }
 
         // Create new user
         User user = User.builder()
-                .email(registerRequest.getEmail())
-                .password(passwordEncoder.encode(registerRequest.getPassword()))
-                .firstName(registerRequest.getFirstName())
-                .lastName(registerRequest.getLastName())
+                .email(normalizedEmail)
+                .password(passwordEncoder.encode(password))
+                .firstName(normalizedFirstName)
+                .lastName(normalizedLastName)
                 .enabled(true)
                 .build();
 
@@ -77,23 +80,33 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest loginRequest) {
+        String normalizedEmail = normalizeEmail(loginRequest.getEmail());
+
         // Authenticate user
-        Authentication authentication = authenticationManager.authenticate(
+        authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.getEmail(),
+                        normalizedEmail,
                         loginRequest.getPassword()
                 )
         );
 
         // Get user details
-        UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getEmail());
-        User user = userRepository.findByEmail(loginRequest.getEmail())
+        UserDetails userDetails = userDetailsService.loadUserByUsername(normalizedEmail);
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Generate token
         String token = jwtUtil.generateToken(userDetails);
 
         return buildAuthResponse(token, user);
+    }
+
+    private String normalizeEmail(String email) {
+        return normalizeText(email).toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeText(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private AuthResponse buildAuthResponse(String token, User user) {

@@ -41,6 +41,14 @@ export class App implements OnInit {
     return this.authService.hasRole('ROLE_ADMIN');
   }
 
+  hasRole(role: string): boolean {
+    return this.authService.hasRole(role);
+  }
+
+  isAuthenticated(): boolean {
+    return this.authService.isAuthenticated();
+  }
+
   closeNotification(id: string): void {
     this.notificationService.removeNotification(id);
   }

@@ -43,11 +43,15 @@ export class LoginComponent implements OnInit {
     }
 
     this.loading = true;
+    this.loginForm.patchValue({
+      email: this.f['email'].value.trim().toLowerCase()
+    }, { emitEvent: false });
+
     this.authService.login(this.loginForm.value).subscribe({
       next: (response) => {
         this.loading = false;
         const returnUrl = this.route.snapshot.queryParams['returnUrl'];
-        this.router.navigate([returnUrl || '/dashboard']);
+        this.router.navigateByUrl(returnUrl || this.authService.getDefaultRoute(response));
       },
       error: (error) => {
         this.loading = false;

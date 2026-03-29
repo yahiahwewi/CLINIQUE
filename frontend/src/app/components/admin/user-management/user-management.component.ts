@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DataService, User } from '../../../services/data.service';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DataService, User, UserCreateRequest } from '../../../services/data.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -22,10 +22,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   editingUser: User | null = null;
   userForm!: FormGroup;
   passwordForm!: FormGroup;
-
-  availableRoles = ['ROLE_USER', 'ROLE_ADMIN'];
+  availableRoles = ['ROLE_USER', 'ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_ADMIN'];
   private destroy$ = new Subject<void>();
-  private successTimeout: any;
 
   constructor(
     private dataService: DataService,
@@ -33,81 +31,85 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.initForm();
+    this.initForms();
     this.loadUsers();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    if (this.successTimeout) {
-      clearTimeout(this.successTimeout);
-    }
   }
 
-  initForm(): void {
+  initForms(): void {
     this.userForm = this.formBuilder.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
-      email: [{ value: '', disabled: true }],
-      roles: [[], Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: [''],
+      roles: [['ROLE_USER'], Validators.required],
       enabled: [true]
     });
 
     this.passwordForm = this.formBuilder.group({
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', Validators.required]
-    }, { validator: this.passwordMatchValidator });
+    }, { validators: this.passwordMatchValidator });
   }
 
-  passwordMatchValidator(g: FormGroup) {
-    return g.get('password')?.value === g.get('confirmPassword')?.value
-      ? null : { 'mismatch': true };
+  passwordMatchValidator(group: FormGroup) {
+    return group.get('password')?.value === group.get('confirmPassword')?.value
+      ? null
+      : { mismatch: true };
   }
 
   loadUsers(): void {
     this.loading = true;
     this.error = '';
+
     this.dataService.adminGetAllUsers()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (data) => {
-          this.users = data;
+        next: users => {
+          this.users = users;
           this.loading = false;
         },
-        error: (error) => {
+        error: () => {
           this.error = 'Failed to load users';
           this.loading = false;
         }
       });
   }
 
-  openForm(user?: User): void {
-    if (user) {
-      this.editingUser = user;
-      this.userForm.patchValue({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        roles: user.roles.map(r => r.name || r),
-        enabled: user.enabled
-      });
-    } else {
-      this.editingUser = null;
-      this.userForm.reset({ enabled: true, roles: ['ROLE_USER'] });
-    }
+  openCreateForm(): void {
+    this.editingUser = null;
+    this.userForm.reset({
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      roles: ['ROLE_USER'],
+      enabled: true
+    });
+    this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
+    this.userForm.get('password')?.updateValueAndValidity();
+    this.userForm.get('email')?.enable();
     this.showForm = true;
   }
 
-  onRoleChange(role: string, checked: boolean): void {
-    const roles = this.userForm.get('roles')?.value as string[];
-    if (checked) {
-      if (!roles.includes(role)) {
-        this.userForm.get('roles')?.setValue([...roles, role]);
-      }
-    } else {
-      this.userForm.get('roles')?.setValue(roles.filter(r => r !== role));
-    }
+  openEditForm(user: User): void {
+    this.editingUser = user;
+    this.userForm.reset({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      password: '',
+      roles: user.roles.map(role => role.name),
+      enabled: user.enabled
+    });
+    this.userForm.get('password')?.clearValidators();
+    this.userForm.get('password')?.updateValueAndValidity();
+    this.userForm.get('email')?.disable();
+    this.showForm = true;
   }
 
   openPasswordForm(user: User): void {
@@ -120,56 +122,84 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.showForm = false;
     this.showPasswordForm = false;
     this.editingUser = null;
-    this.userForm.reset();
+    this.userForm.reset({ roles: ['ROLE_USER'], enabled: true });
     this.passwordForm.reset();
   }
 
-  private showSuccess(message: string): void {
-    this.success = message;
-    if (this.successTimeout) {
-      clearTimeout(this.successTimeout);
-    }
-    this.successTimeout = setTimeout(() => this.success = '', 3000);
+  onRoleChange(role: string, checked: boolean): void {
+    const roles = [...(this.userForm.get('roles')?.value || [])];
+    const nextRoles = checked
+      ? Array.from(new Set([...roles, role]))
+      : roles.filter((currentRole: string) => currentRole !== role);
+
+    this.userForm.get('roles')?.setValue(nextRoles);
   }
 
-  onSubmit(): void {
-    if (this.userForm.invalid || !this.editingUser) {
+  submitUser(): void {
+    if (this.userForm.invalid) {
+      this.userForm.markAllAsTouched();
       return;
     }
 
     this.loading = true;
     this.error = '';
+    this.success = '';
 
     const formValue = this.userForm.getRawValue();
-    const updatedUser: Partial<User> = {
+
+    if (this.editingUser) {
+      const payload = {
+        firstName: formValue.firstName,
+        lastName: formValue.lastName,
+        enabled: formValue.enabled,
+        roles: formValue.roles.map((role: string) => ({ name: role }))
+      };
+
+      this.dataService.adminUpdateUser(this.editingUser.id, payload)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (updatedUser) => {
+            this.loading = false;
+            this.success = 'User updated successfully';
+            this.upsertUser(updatedUser);
+            this.closeForm();
+          },
+          error: (error) => {
+            this.loading = false;
+            this.error = error?.error?.message || 'Failed to update user';
+          }
+        });
+      return;
+    }
+
+    const createPayload: UserCreateRequest = {
       firstName: formValue.firstName,
       lastName: formValue.lastName,
-      enabled: formValue.enabled,
-      roles: formValue.roles.map((roleName: string) => ({ name: roleName }))
+      email: formValue.email,
+      password: formValue.password,
+      roles: formValue.roles,
+      enabled: formValue.enabled
     };
 
-    this.dataService.adminUpdateUser(this.editingUser.id, updatedUser)
+    this.dataService.adminCreateUser(createPayload)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
-          // Optimistic update: Update local user in array instead of reloading
-          const index = this.users.findIndex(u => u.id === this.editingUser?.id);
-          if (index !== -1) {
-            this.users[index] = { ...this.users[index], ...updatedUser };
-          }
+        next: (createdUser) => {
           this.loading = false;
-          this.showSuccess('User updated successfully');
+          this.success = 'User created successfully';
+          this.upsertUser(createdUser);
           this.closeForm();
         },
-        error: () => {
-          this.error = 'Failed to update user';
+        error: (error) => {
           this.loading = false;
+          this.error = error?.error?.message || 'Failed to create user';
         }
       });
   }
 
-  onPasswordSubmit(): void {
+  submitPassword(): void {
     if (this.passwordForm.invalid || !this.editingUser) {
+      this.passwordForm.markAllAsTouched();
       return;
     }
 
@@ -181,12 +211,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.loading = false;
-          this.showSuccess('Password changed successfully');
+          this.success = 'Password updated successfully';
           this.closeForm();
         },
-        error: () => {
-          this.error = 'Failed to change password';
+        error: (error) => {
           this.loading = false;
+          this.error = error?.error?.message || 'Failed to update password';
         }
       });
   }
@@ -196,34 +226,37 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          // Optimistic update: Update locally without reloading
           user.enabled = !user.enabled;
-          this.showSuccess(`User ${user.enabled ? 'enabled' : 'disabled'} successfully`);
+          this.success = `User ${user.enabled ? 'enabled' : 'disabled'} successfully`;
         },
-        error: () => {
-          this.error = 'Failed to toggle user status';
+        error: (error) => {
+          this.error = error?.error?.message || 'Failed to update user status';
         }
       });
   }
 
-  deleteUser(id: number, name: string): void {
-    if (confirm(`Are you sure you want to delete ${name}?`)) {
-      this.dataService.adminDeleteUser(id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            // Remove user from local array instead of reloading
-            this.users = this.users.filter(u => u.id !== id);
-            this.showSuccess('User deleted successfully');
-          },
-          error: () => {
-            this.error = 'Failed to delete user';
-          }
-        });
+  deleteUser(user: User): void {
+    if (!confirm(`Delete ${user.firstName} ${user.lastName}?`)) {
+      return;
     }
+
+    this.dataService.adminDeleteUser(user.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.success = 'User deleted successfully';
+          this.users = this.users.filter(currentUser => currentUser.id !== user.id);
+        },
+        error: (error) => {
+          this.error = error?.error?.message || 'Failed to delete user';
+        }
+      });
   }
 
-  get f() {
-    return this.userForm.controls;
+  private upsertUser(user: User): void {
+    const otherUsers = this.users.filter(currentUser => currentUser.id !== user.id);
+    this.users = [...otherUsers, user].sort((left, right) =>
+      `${left.firstName} ${left.lastName}`.localeCompare(`${right.firstName} ${right.lastName}`)
+    );
   }
 }

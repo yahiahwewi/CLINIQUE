@@ -14,10 +14,11 @@
 
           <!-- Nav Links for desktop -->
           <div class="hidden md:ml-10 md:flex md:space-x-4">
-            <a routerLink="/dashboard" routerLinkActive="bg-indigo-800" [routerLinkActiveOptions]="{exact: true}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Dashboard</a>
+            <a *ngIf="isAuthenticated()" routerLink="/dashboard/overview" routerLinkActive="bg-indigo-800" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Overview</a>
+            <a *ngIf="isAuthenticated()" routerLink="/dashboard/appointments" routerLinkActive="bg-indigo-800" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Appointments</a>
             <ng-container *ngIf="isAdmin()">
               <a routerLink="/dashboard/admin/dashboard" routerLinkActive="bg-indigo-800" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Admin Panel</a>
-              <a routerLink="/dashboard/admin/users" routerLinkActive="bg-indigo-800" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Users Management</a>
+              <a routerLink="/dashboard/admin/users" routerLinkActive="bg-indigo-800" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Accounts</a>
             </ng-container>
           </div>
         </div>
@@ -26,6 +27,9 @@
         <div class="flex items-center gap-4">
           <ng-container *ngIf="currentUser; else authLinks">
             <span class="text-sm font-medium opacity-90 hidden sm:inline">Hi, {{ currentUser.firstName }}</span>
+            <span *ngIf="currentUser.roles.length" class="hidden rounded-full bg-indigo-600 px-3 py-1 text-xs font-semibold sm:inline-flex">
+              {{ currentUser.roles[0] }}
+            </span>
             <button (click)="logout()" class="bg-indigo-800 hover:bg-indigo-900 px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm border border-indigo-600">
               Logout
             </button>
@@ -75,7 +79,7 @@
 
   <!-- Main Content Area -->
   <main class="flex-grow">
-    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <router-outlet />
     </div>
   </main>

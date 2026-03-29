@@ -1,7 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, of } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, BehaviorSubject, throwError } from 'rxjs';
+import { catchError, tap, timeout } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 
 export interface LoginRequest {
@@ -31,7 +31,8 @@ export interface AuthResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8080/api';
+  private apiUrl = '/api';
+  private requestTimeoutMs = 15000;
   private platformId = inject(PLATFORM_ID);
   private currentUserSubject = new BehaviorSubject<AuthResponse | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
@@ -46,33 +47,55 @@ export class AuthService {
   }
 
   login(loginRequest: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, loginRequest)
+    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, {
+      email: loginRequest.email.trim().toLowerCase(),
+      password: loginRequest.password
+    })
       .pipe(
+        timeout(this.requestTimeoutMs),
         tap(response => {
           this.saveToken(response.token);
           this.saveUser(response);
           this.currentUserSubject.next(response);
-        })
+        }),
+        catchError(error => this.handleAuthRequestError(error))
       );
   }
 
   register(registerRequest: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, registerRequest)
+    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, {
+      firstName: registerRequest.firstName.trim(),
+      lastName: registerRequest.lastName.trim(),
+      email: registerRequest.email.trim().toLowerCase(),
+      password: registerRequest.password,
+      confirmPassword: registerRequest.confirmPassword
+    })
       .pipe(
+        timeout(this.requestTimeoutMs),
         tap(response => {
           this.saveToken(response.token);
           this.saveUser(response);
           this.currentUserSubject.next(response);
-        })
+        }),
+        catchError(error => this.handleAuthRequestError(error))
       );
   }
 
   logout(): void {
+    this.clearStoredAuth();
+    this.currentUserSubject.next(null);
+  }
+
+  clearSession(): void {
+    this.clearStoredAuth();
+    this.currentUserSubject.next(null);
+  }
+
+  private clearStoredAuth(): void {
     if (this.isBrowser()) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
     }
-    this.currentUserSubject.next(null);
   }
 
   saveToken(token: string): void {
@@ -103,8 +126,25 @@ export class AuthService {
     return !!user && user.roles.includes(role);
   }
 
+  hasAnyRole(roles: string[]): boolean {
+    const user = this.getCurrentUser();
+    return !!user && roles.some(role => user.roles.includes(role));
+  }
+
   getCurrentUser(): AuthResponse | null {
     return this.currentUserSubject.value;
+  }
+
+  getDefaultRoute(user: AuthResponse | null = this.getCurrentUser()): string {
+    if (!user) {
+      return '/login';
+    }
+
+    if (user.roles.includes('ROLE_ADMIN')) {
+      return '/dashboard/admin/dashboard';
+    }
+
+    return '/dashboard/overview';
   }
 
   private isBrowser(): boolean {
@@ -125,5 +165,21 @@ export class AuthService {
       }
     }
     return null;
+  }
+
+  private handleAuthRequestError(error: any): Observable<never> {
+    const normalizedMessage = error?.name === 'TimeoutError'
+      ? 'The server took too long to respond. Please make sure the backend is running and try again.'
+      : error?.status === 0
+        ? 'Unable to reach the server. Please check that the app is running and try again.'
+        : error?.error?.message;
+
+    return throwError(() => ({
+      ...error,
+      error: {
+        ...(error?.error ?? {}),
+        message: normalizedMessage ?? 'Authentication request failed. Please try again.'
+      }
+    }));
   }
 }

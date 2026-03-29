@@ -1,67 +1,110 @@
-<div class="max-w-7xl mx-auto">
-  <h1 class="text-4xl font-bold text-gray-800 mb-8">Dashboard</h1>
+<div class="space-y-6">
+  <div class="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-900 px-8 py-10 text-white shadow-[0_30px_80px_-30px_rgba(8,47,73,0.8)]">
+    <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-300/20 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/3 h-28 w-28 rounded-full bg-emerald-300/10 blur-2xl"></div>
+    <div class="relative">
+      <p class="text-sm uppercase tracking-[0.3em] text-cyan-200">Hospital Operations</p>
+      <h1 class="mt-3 text-4xl font-bold">Welcome, {{ currentUser?.firstName }}</h1>
+      <p class="mt-3 max-w-2xl text-sm text-slate-200">{{ roleSummary() }}</p>
 
-  <!-- Welcome Card -->
-  <div class="bg-white rounded-lg shadow-md p-8 mb-8">
-    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Welcome, {{ currentUser?.firstName }}!</h2>
-    <p class="text-gray-600 mb-4">You are logged in as <strong>{{ currentUser?.email }}</strong></p>
+      <div class="mt-6 flex flex-wrap gap-2">
+        <span *ngFor="let role of currentUser?.roles" class="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm font-medium">
+          {{ role }}
+        </span>
+      </div>
 
-    <!-- User Info -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-blue-50 p-4 rounded-lg">
-        <p class="text-gray-600 text-sm">First Name</p>
-        <p class="text-lg font-semibold text-gray-800">{{ currentUser?.firstName }}</p>
-      </div>
-      <div class="bg-green-50 p-4 rounded-lg">
-        <p class="text-gray-600 text-sm">Last Name</p>
-        <p class="text-lg font-semibold text-gray-800">{{ currentUser?.lastName }}</p>
-      </div>
-      <div class="bg-purple-50 p-4 rounded-lg">
-        <p class="text-gray-600 text-sm">Role</p>
-        <div class="flex gap-2 mt-2">
-          <span *ngFor="let role of currentUser?.roles" class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
-            {{ role }}
-          </span>
+      <div class="mt-8 grid gap-4 md:grid-cols-3">
+        <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
+          <p class="text-xs uppercase tracking-[0.25em] text-cyan-100/80">Visibility</p>
+          <p class="mt-3 text-3xl font-bold">{{ appointments.length }}</p>
+          <p class="mt-2 text-sm text-slate-200">Appointments currently visible to your role</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
+          <p class="text-xs uppercase tracking-[0.25em] text-cyan-100/80">Next Step</p>
+          <p class="mt-3 text-lg font-semibold">Start from the overview</p>
+          <p class="mt-2 text-sm text-slate-200">Use the workspace when you are ready to edit, accept, or schedule.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
+          <p class="text-xs uppercase tracking-[0.25em] text-cyan-100/80">Quick Route</p>
+          <a routerLink="/dashboard/appointments" class="mt-3 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-50">
+            Open appointment workspace
+          </a>
+          <p class="mt-2 text-sm text-slate-200">Go directly to the action queue for your role.</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Dashboard Stats -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <h3 class="text-xl font-semibold text-gray-800 mb-4">Getting Started</h3>
-      <ul class="space-y-3 text-gray-600">
-        <li class="flex items-start">
-          <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-          </svg>
-          <span>You are successfully logged in</span>
-        </li>
-        <li class="flex items-start">
-          <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-          </svg>
-          <span>Your profile has been created</span>
-        </li>
-        <li class="flex items-start">
-          <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-          </svg>
-          <span>You can now access your dashboard</span>
-        </li>
-      </ul>
+  <div class="grid gap-5 lg:grid-cols-3">
+    <a routerLink="/dashboard/appointments" class="rounded-2xl bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+      <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Appointments</p>
+      <h2 class="mt-3 text-xl font-semibold text-slate-900">Go to appointment workspace</h2>
+      <p class="mt-2 text-sm text-slate-500">View the queue and use the actions available for your role.</p>
+    </a>
+
+    <a *ngIf="hasRole('ROLE_ADMIN')" routerLink="/dashboard/admin/users" class="rounded-2xl bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+      <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Accounts</p>
+      <h2 class="mt-3 text-xl font-semibold text-slate-900">Manage staff accounts</h2>
+      <p class="mt-2 text-sm text-slate-500">Create doctors, nurses, admins, and patient accounts from one place.</p>
+    </a>
+
+    <a *ngIf="hasRole('ROLE_ADMIN')" routerLink="/dashboard/admin/dashboard" class="rounded-2xl bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+      <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Reporting</p>
+      <h2 class="mt-3 text-xl font-semibold text-slate-900">Open admin summary</h2>
+      <p class="mt-2 text-sm text-slate-500">Track user and appointment counts across the system.</p>
+    </a>
+  </div>
+
+  <section class="rounded-3xl bg-white p-6 shadow-sm">
+    <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+      <div>
+        <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Queue Snapshot</p>
+        <h2 class="mt-2 text-2xl font-bold text-slate-900">{{ appointmentHeading() }}</h2>
+      </div>
+      <a routerLink="/dashboard/appointments" class="text-sm font-semibold text-sky-700 hover:text-sky-900">Open full appointment workspace</a>
     </div>
 
-    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-md p-6">
-      <h3 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h3>
-      <button class="w-full mb-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition">
-        View Profile
-      </button>
-      <button class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition">
-        Settings
-      </button>
+    <div *ngIf="loadingAppointments" class="mt-6 text-sm text-slate-500">Loading appointments...</div>
+    <div *ngIf="appointmentsError" class="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+      {{ appointmentsError }}
     </div>
-  </div>
+
+    <div *ngIf="!loadingAppointments && !appointmentsError && appointments.length === 0" class="mt-6 rounded-2xl bg-slate-50 px-4 py-6 text-sm text-slate-500">
+      No appointments are currently visible for this account.
+    </div>
+
+    <div *ngIf="!loadingAppointments && appointments.length > 0" class="mt-6 grid gap-4">
+      <article *ngFor="let appointment of appointments | slice:0:5" class="rounded-2xl border border-slate-200 p-4">
+        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">{{ appointment.title }}</h3>
+            <p class="mt-1 text-sm text-slate-500">{{ appointment.description }}</p>
+          </div>
+          <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+            {{ appointment.status }}
+          </span>
+        </div>
+
+        <div class="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-4">
+          <div>
+            <p class="font-semibold text-slate-800">Patient</p>
+            <p>{{ appointment.patient.fullName }}</p>
+          </div>
+          <div>
+            <p class="font-semibold text-slate-800">Doctor</p>
+            <p>{{ appointment.doctor.fullName }}</p>
+          </div>
+          <div>
+            <p class="font-semibold text-slate-800">Nurse</p>
+            <p>{{ appointment.nurse?.fullName || 'Not assigned' }}</p>
+          </div>
+          <div>
+            <p class="font-semibold text-slate-800">Date & Time</p>
+            <p>{{ formatDate(appointment.appointmentDateTime) }}</p>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
 </div>
 

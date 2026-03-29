@@ -22,6 +22,15 @@ export const routes: Routes = [
     children: [
       {
         path: '',
+        pathMatch: 'full',
+        redirectTo: 'overview'
+      },
+      {
+        path: 'appointments',
+        loadComponent: () => import('./components/appointments/appointments.component').then(m => m.AppointmentsComponent)
+      },
+      {
+        path: 'overview',
         loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
       {
