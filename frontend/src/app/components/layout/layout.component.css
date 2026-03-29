@@ -1,0 +1,7 @@
+/* Sidebar animations */
+:host ::ng-deep {
+  .sidebar-transition {
+    @apply transition-all duration-300;
+  }
+}
+

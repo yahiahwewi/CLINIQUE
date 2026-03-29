@@ -1,0 +1,100 @@
+<div class="min-h-screen bg-gray-50 flex flex-col">
+  <!-- Modern Global Navbar -->
+  <nav class="bg-indigo-700 text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+        <!-- Logo/Brand -->
+        <div class="flex items-center">
+          <a routerLink="/" class="flex items-center gap-2">
+            <svg class="h-8 w-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L2 19L12 22L22 19L12 2Z" />
+            </svg>
+            <span class="text-xl font-bold tracking-tight">AppPortal</span>
+          </a>
+
+          <!-- Nav Links for desktop -->
+          <div class="hidden md:ml-10 md:flex md:space-x-4">
+            <a routerLink="/dashboard" routerLinkActive="bg-indigo-800" [routerLinkActiveOptions]="{exact: true}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Dashboard</a>
+            <ng-container *ngIf="isAdmin()">
+              <a routerLink="/dashboard/admin/dashboard" routerLinkActive="bg-indigo-800" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Admin Panel</a>
+              <a routerLink="/dashboard/admin/users" routerLinkActive="bg-indigo-800" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Users Management</a>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- User Actions -->
+        <div class="flex items-center gap-4">
+          <ng-container *ngIf="currentUser; else authLinks">
+            <span class="text-sm font-medium opacity-90 hidden sm:inline">Hi, {{ currentUser.firstName }}</span>
+            <button (click)="logout()" class="bg-indigo-800 hover:bg-indigo-900 px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm border border-indigo-600">
+              Logout
+            </button>
+          </ng-container>
+          <ng-template #authLinks>
+            <a routerLink="/login" class="text-sm font-medium hover:text-indigo-200 transition">Login</a>
+            <a routerLink="/register" class="bg-white text-indigo-700 px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm hover:bg-indigo-50">Sign Up</a>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Notification Container -->
+  <div class="fixed top-20 right-4 z-50 space-y-3 pointer-events-none">
+    <div
+      *ngFor="let notification of notifications"
+      [ngClass]="{
+        'bg-white border-l-4 border-green-500 text-green-800 shadow-xl': notification.type === 'success',
+        'bg-white border-l-4 border-red-500 text-red-800 shadow-xl': notification.type === 'error',
+        'bg-white border-l-4 border-blue-500 text-blue-800 shadow-xl': notification.type === 'info',
+        'bg-white border-l-4 border-yellow-500 text-yellow-800 shadow-xl': notification.type === 'warning'
+      }"
+      class="pointer-events-auto rounded-lg p-5 w-80 transform transition-all duration-300 animate-slide-in relative overflow-hidden"
+    >
+      <div class="flex items-center gap-3">
+        <ng-container [ngSwitch]="notification.type">
+          <svg *ngSwitchCase="'success'" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <svg *ngSwitchCase="'error'" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </ng-container>
+        <p class="text-sm font-semibold pr-6">{{ notification.message }}</p>
+      </div>
+      <button
+        (click)="closeNotification(notification.id)"
+        class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition"
+      >
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="flex-grow">
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <router-outlet />
+    </div>
+  </main>
+
+  <!-- Simple Footer -->
+  <footer class="bg-white border-t border-gray-200 py-6 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 text-center text-gray-500 text-sm">
+      &copy; 2026 AppPortal. All rights reserved. Built with Angular & Spring Boot.
+    </div>
+  </footer>
+</div>
+
+<style>
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out forwards;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+</style>
+

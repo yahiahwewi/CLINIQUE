@@ -1,0 +1,67 @@
+<div class="max-w-7xl mx-auto">
+  <h1 class="text-4xl font-bold text-gray-800 mb-8">Dashboard</h1>
+
+  <!-- Welcome Card -->
+  <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Welcome, {{ currentUser?.firstName }}!</h2>
+    <p class="text-gray-600 mb-4">You are logged in as <strong>{{ currentUser?.email }}</strong></p>
+
+    <!-- User Info -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-blue-50 p-4 rounded-lg">
+        <p class="text-gray-600 text-sm">First Name</p>
+        <p class="text-lg font-semibold text-gray-800">{{ currentUser?.firstName }}</p>
+      </div>
+      <div class="bg-green-50 p-4 rounded-lg">
+        <p class="text-gray-600 text-sm">Last Name</p>
+        <p class="text-lg font-semibold text-gray-800">{{ currentUser?.lastName }}</p>
+      </div>
+      <div class="bg-purple-50 p-4 rounded-lg">
+        <p class="text-gray-600 text-sm">Role</p>
+        <div class="flex gap-2 mt-2">
+          <span *ngFor="let role of currentUser?.roles" class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
+            {{ role }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">Getting Started</h3>
+      <ul class="space-y-3 text-gray-600">
+        <li class="flex items-start">
+          <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span>You are successfully logged in</span>
+        </li>
+        <li class="flex items-start">
+          <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Your profile has been created</span>
+        </li>
+        <li class="flex items-start">
+          <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span>You can now access your dashboard</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-md p-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h3>
+      <button class="w-full mb-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+        View Profile
+      </button>
+      <button class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition">
+        Settings
+      </button>
+    </div>
+  </div>
+</div>
+
