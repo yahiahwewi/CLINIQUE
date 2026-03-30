@@ -333,4 +333,8 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   loading(): boolean {
     return this.loadingAppointments;
   }
+
+  isUser(): boolean {
+    return this.authService.hasRole('ROLE_USER');
+  }
 }
