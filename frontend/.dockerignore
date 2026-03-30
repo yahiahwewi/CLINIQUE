@@ -1,5 +1,6 @@
 node_modules
 dist
 .angular
-.npm-cache
 frontend-run.log
+*.iml
+.idea

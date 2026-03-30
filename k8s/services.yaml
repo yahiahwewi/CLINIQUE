@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hospital-database
+spec:
+  selector:
+    app: hospital-database
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hospital-backend
+spec:
+  selector:
+    app: hospital-backend
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hospital-frontend
+spec:
+  type: LoadBalancer
+  selector:
+    app: hospital-frontend
+  ports:
+    - port: 80
+      targetPort: 80

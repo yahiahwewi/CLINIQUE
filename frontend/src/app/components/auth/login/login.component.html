@@ -1,63 +1,88 @@
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-  <div class="w-full max-w-md bg-white rounded-lg shadow-xl p-8">
-    <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Login</h1>
-
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      <!-- Email -->
-      <div class="mb-6">
-        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-        <input
-          type="email"
-          id="email"
-          formControlName="email"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition"
-          placeholder="you@example.com"
-          [ngClass]="{ 'border-red-500': submitted && f['email'].errors }"
-        />
-        <div *ngIf="submitted && f['email'].errors" class="mt-2 text-red-500 text-sm">
-          <div *ngIf="f['email'].errors['required']">Email is required</div>
-          <div *ngIf="f['email'].errors['email']">Please enter a valid email</div>
-        </div>
-      </div>
-
-      <!-- Password -->
-      <div class="mb-6">
-        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-        <input
-          type="password"
-          id="password"
-          formControlName="password"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition"
-          placeholder="••••••••"
-          [ngClass]="{ 'border-red-500': submitted && f['password'].errors }"
-        />
-        <div *ngIf="submitted && f['password'].errors" class="mt-2 text-red-500 text-sm">
-          <div *ngIf="f['password'].errors['required']">Password is required</div>
-          <div *ngIf="f['password'].errors['minlength']">Password must be at least 6 characters</div>
-        </div>
-      </div>
-
-      <!-- Error Message -->
-      <div *ngIf="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-        {{ error }}
-      </div>
-
-      <!-- Submit Button -->
-      <button
-        type="submit"
-        [disabled]="loading"
-        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-      >
-        <span *ngIf="!loading">Sign In</span>
-        <span *ngIf="loading">Signing in...</span>
-      </button>
-
-      <!-- Register Link -->
-      <p class="mt-6 text-center text-gray-600">
-        Don't have an account?
-        <a routerLink="/register" class="text-indigo-600 hover:text-indigo-700 font-semibold">Register here</a>
+<div class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.18),_transparent_40%),linear-gradient(135deg,_#eff6ff,_#eef2ff_55%,_#f8fafc)] px-4 py-10">
+  <div class="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+    <section class="rounded-[2rem] border border-white/60 bg-slate-950 px-8 py-10 text-white shadow-[0_24px_80px_-28px_rgba(15,23,42,0.55)]">
+      <p class="mb-4 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">
+        Hospital Operations Hub
       </p>
-    </form>
+      <h1 class="max-w-xl text-4xl font-semibold leading-tight sm:text-5xl">Sign in to the role-based care dashboard.</h1>
+      <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
+        Patients, doctors, nurses, and admins all land in a tailored overview with the tools they need first.
+      </p>
+
+      <div class="mt-8 grid gap-4 sm:grid-cols-2">
+        <button
+          *ngFor="let account of demoAccounts"
+          type="button"
+          (click)="fillDemoAccount(account.email, account.password)"
+          class="rounded-2xl border border-white/10 bg-white/5 p-4 text-left transition hover:border-sky-300/40 hover:bg-white/10"
+        >
+          <p class="text-sm font-semibold text-white">{{ account.label }}</p>
+          <p class="mt-1 text-sm text-slate-300">{{ account.email }}</p>
+        </button>
+      </div>
+    </section>
+
+    <section class="rounded-[2rem] border border-slate-200 bg-white/95 p-8 shadow-[0_18px_60px_-32px_rgba(15,23,42,0.35)] backdrop-blur">
+      <div class="mb-8">
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">Welcome back</p>
+        <h2 class="mt-2 text-3xl font-semibold text-slate-900">Login</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-500">Use your account or tap one of the demo profiles on the left to fill the form instantly.</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5">
+        <div>
+          <label for="email" class="mb-2 block text-sm font-medium text-slate-700">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            class="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+            placeholder="you@example.com"
+            [ngClass]="{ 'border-red-400 ring-4 ring-red-100': submitted && f['email'].errors }"
+          />
+          <div *ngIf="submitted && f['email'].errors" class="mt-2 text-sm text-red-600">
+            <div *ngIf="f['email'].errors['required']">Email is required.</div>
+            <div *ngIf="f['email'].errors['email']">Please enter a valid email address.</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="mb-2 flex items-center justify-between gap-4">
+            <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
+            <a routerLink="/forgot-password" class="text-sm font-semibold text-indigo-600 transition hover:text-indigo-700">Forgot password?</a>
+          </div>
+          <input
+            type="password"
+            id="password"
+            formControlName="password"
+            class="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+            placeholder="Enter your password"
+            [ngClass]="{ 'border-red-400 ring-4 ring-red-100': submitted && f['password'].errors }"
+          />
+          <div *ngIf="submitted && f['password'].errors" class="mt-2 text-sm text-red-600">
+            <div *ngIf="f['password'].errors['required']">Password is required.</div>
+            <div *ngIf="f['password'].errors['minlength']">Password must be at least 6 characters.</div>
+          </div>
+        </div>
+
+        <div *ngIf="error" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ error }}
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="loading"
+          class="flex w-full items-center justify-center rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+        >
+          <span *ngIf="!loading">Sign In</span>
+          <span *ngIf="loading">Signing in...</span>
+        </button>
+
+        <p class="text-center text-sm text-slate-500">
+          Don&apos;t have an account?
+          <a routerLink="/register" class="font-semibold text-indigo-600 transition hover:text-indigo-700">Create one</a>
+        </p>
+      </form>
+    </section>
   </div>
 </div>
-

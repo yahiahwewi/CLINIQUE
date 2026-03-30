@@ -17,7 +17,10 @@ export class ErrorInterceptor implements HttpInterceptor {
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        const isAuthRequest = request.url.includes('/auth/login') || request.url.includes('/auth/register');
+        const isAuthRequest = request.url.includes('/auth/login')
+          || request.url.includes('/auth/register')
+          || request.url.includes('/auth/forgot-password')
+          || request.url.includes('/auth/reset-password');
 
         if (error.status === 401) {
           if (isAuthRequest) {

@@ -1,3 +1,5 @@
-.m2
 target
+.m2
 backend-run.log
+*.iml
+.idea

@@ -1,7 +1,10 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.AuthResponse;
+import com.example.demo.dto.ForgotPasswordRequest;
 import com.example.demo.dto.LoginRequest;
+import com.example.demo.dto.MessageResponse;
+import com.example.demo.dto.ResetPasswordRequest;
 import com.example.demo.dto.RegisterRequest;
 import com.example.demo.service.AuthService;
 import jakarta.validation.Valid;
@@ -31,6 +34,18 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         AuthResponse authResponse = authService.login(loginRequest);
         return new ResponseEntity<>(authResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.requestPasswordReset(request);
+        return ResponseEntity.ok(new MessageResponse("If the account exists, a reset link has been generated."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(new MessageResponse("Password reset successful. You can now sign in."));
     }
 
     @GetMapping("/validate")

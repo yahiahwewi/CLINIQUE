@@ -1,21 +1,27 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.AuthResponse;
+import com.example.demo.dto.ForgotPasswordRequest;
 import com.example.demo.dto.LoginRequest;
+import com.example.demo.dto.ResetPasswordRequest;
 import com.example.demo.dto.RegisterRequest;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.JwtUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,16 +33,22 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final PasswordResetNotificationService passwordResetNotificationService;
+    private final long passwordResetExpirationMs;
 
     public AuthService(UserRepository userRepository, RoleRepository roleRepository,
                       PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager,
-                      JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+                      JwtUtil jwtUtil, UserDetailsService userDetailsService,
+                      PasswordResetNotificationService passwordResetNotificationService,
+                      @Value("${app.password-reset.expiration-ms:3600000}") long passwordResetExpirationMs) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.passwordResetNotificationService = passwordResetNotificationService;
+        this.passwordResetExpirationMs = passwordResetExpirationMs;
     }
 
     public AuthResponse register(RegisterRequest registerRequest) {
@@ -99,6 +111,39 @@ public class AuthService {
         String token = jwtUtil.generateToken(userDetails);
 
         return buildAuthResponse(token, user);
+    }
+
+    @Transactional
+    public void requestPasswordReset(ForgotPasswordRequest request) {
+        String normalizedEmail = normalizeEmail(request.getEmail());
+
+        userRepository.findByEmailIgnoreCase(normalizedEmail).ifPresent(user -> {
+            String token = UUID.randomUUID().toString();
+            LocalDateTime expiresAt = LocalDateTime.now().plusNanos(passwordResetExpirationMs * 1_000_000);
+            user.setResetPasswordToken(token);
+            user.setResetPasswordTokenExpiresAt(expiresAt);
+            userRepository.save(user);
+            passwordResetNotificationService.sendPasswordResetEmail(user, token, expiresAt);
+        });
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("Passwords do not match");
+        }
+
+        User user = userRepository.findByResetPasswordToken(request.getToken())
+                .orElseThrow(() -> new IllegalArgumentException("Reset token is invalid or expired"));
+
+        if (user.getResetPasswordTokenExpiresAt() == null || user.getResetPasswordTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Reset token is invalid or expired");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setResetPasswordToken(null);
+        user.setResetPasswordTokenExpiresAt(null);
+        userRepository.save(user);
     }
 
     private String normalizeEmail(String email) {

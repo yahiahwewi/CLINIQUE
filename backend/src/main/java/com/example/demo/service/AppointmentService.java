@@ -167,7 +167,7 @@ public class AppointmentService {
 
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return userRepository.findByEmail(authentication.getName())
+        return userRepository.findByEmailIgnoreCase(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
     }
 

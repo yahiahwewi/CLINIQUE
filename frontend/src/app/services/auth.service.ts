@@ -17,6 +17,20 @@ export interface RegisterRequest {
   confirmPassword: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface MessageResponse {
+  message: string;
+}
+
 export interface AuthResponse {
   token: string;
   type: string;
@@ -81,6 +95,23 @@ export class AuthService {
       );
   }
 
+  forgotPassword(request: ForgotPasswordRequest): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/auth/forgot-password`, {
+      email: request.email.trim().toLowerCase()
+    }).pipe(
+      timeout(this.requestTimeoutMs),
+      catchError(error => this.handleAuthRequestError(error))
+    );
+  }
+
+  resetPassword(request: ResetPasswordRequest): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/auth/reset-password`, request)
+      .pipe(
+        timeout(this.requestTimeoutMs),
+        catchError(error => this.handleAuthRequestError(error))
+      );
+  }
+
   logout(): void {
     this.clearStoredAuth();
     this.currentUserSubject.next(null);
@@ -140,7 +171,7 @@ export class AuthService {
       return '/login';
     }
 
-    if (user.roles.includes('ROLE_ADMIN')) {
+    if (user.roles.includes('ADMIN')) {
       return '/dashboard/admin/dashboard';
     }
 

@@ -56,7 +56,7 @@ public class DataInitializer {
             String password,
             String roleName
     ) {
-        if (!userRepository.existsByEmail(email)) {
+        if (!userRepository.existsByEmailIgnoreCase(email)) {
             Role role = roleRepository.findByName(roleName).orElseThrow();
             User user = User.builder()
                     .email(email)

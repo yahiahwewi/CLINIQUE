@@ -15,6 +15,12 @@ export class LoginComponent implements OnInit {
   loading = false;
   submitted = false;
   error = '';
+  readonly demoAccounts = [
+    { label: 'Admin', email: 'admin@example.com', password: 'admin123' },
+    { label: 'Patient', email: 'john@example.com', password: 'password123' },
+    { label: 'Doctor', email: 'doctor@example.com', password: 'password123' },
+    { label: 'Nurse', email: 'nurse@example.com', password: 'password123' }
+  ];
 
   constructor(
     private formBuilder: FormBuilder,
@@ -58,6 +64,11 @@ export class LoginComponent implements OnInit {
         this.error = error.error?.message || 'Login failed. Please check your credentials.';
       }
     });
+  }
+
+  fillDemoAccount(email: string, password: string): void {
+    this.loginForm.patchValue({ email, password });
+    this.error = '';
   }
 }
 

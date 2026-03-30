@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,6 +47,11 @@ public class User {
     @Column(nullable = false)
     @Builder.Default
     private Boolean enabled = true;
+
+    @Column(length = 120)
+    private String resetPasswordToken;
+
+    private LocalDateTime resetPasswordTokenExpiresAt;
 
     // Use a simpler string-based roles view for fast rendering
     public Set<String> getRoleNames() {
