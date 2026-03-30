@@ -171,7 +171,7 @@ export class AuthService {
       return '/login';
     }
 
-    if (user.roles.includes('ADMIN')) {
+    if (user.roles.includes('ROLE_ADMIN')) {
       return '/dashboard/admin/dashboard';
     }
 
