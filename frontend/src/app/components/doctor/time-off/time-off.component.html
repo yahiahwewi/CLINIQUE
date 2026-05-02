@@ -1,0 +1,82 @@
+<div class="space-y-6">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">My schedule</p>
+      <h1 class="mt-1 font-display text-3xl font-semibold text-lumen-900">Time off</h1>
+      <p class="mt-1 max-w-xl text-sm text-ink-500">Request days off. Once approved by an admin, those dates won't be bookable for you.</p>
+    </div>
+    <button (click)="open()" class="lumen-btn lumen-btn-primary">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Request time off
+    </button>
+  </header>
+
+  <div *ngIf="error()" class="lumen-card border-l-4 border-l-coral-500 px-4 py-3 text-sm text-coral-600">{{ error() }}</div>
+
+  <div *ngIf="loading()" class="space-y-2">
+    <div class="lumen-skeleton h-20 w-full"></div>
+    <div class="lumen-skeleton h-20 w-full"></div>
+  </div>
+
+  <div *ngIf="!loading() && list().length === 0" class="lumen-card p-10 text-center">
+    <p class="font-display text-lg text-lumen-900">No requests yet.</p>
+    <p class="mt-1 text-sm text-ink-500">When you need a break, request it here.</p>
+  </div>
+
+  <ul *ngIf="!loading() && list().length > 0" class="space-y-3">
+    <li *ngFor="let t of list()" class="lumen-card p-5">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <p class="font-mono text-sm text-lumen-900">{{ fmt(t.startDate) }} → {{ fmt(t.endDate) }}</p>
+            <span [ngClass]="pillClass(t.status)">{{ t.status }}</span>
+            <span class="text-[11px] uppercase tracking-wider text-ink-500">{{ daysSpanned(t) }} day{{ daysSpanned(t) === 1 ? '' : 's' }}</span>
+          </div>
+          <p *ngIf="t.reason" class="mt-1 text-sm italic text-ink-700">"{{ t.reason }}"</p>
+          <p *ngIf="t.decisionNote" class="mt-1 text-[11px] text-ink-500">Admin note: {{ t.decisionNote }}</p>
+          <p *ngIf="t.decidedByName" class="text-[11px] uppercase tracking-wider text-ink-500">Decided by {{ t.decidedByName }}</p>
+        </div>
+      </div>
+    </li>
+  </ul>
+
+  <!-- Modal -->
+  <div *ngIf="showForm()" class="fixed inset-0 z-40 flex items-center justify-center bg-lumen-900/40 p-4 backdrop-blur-sm">
+    <div class="lumen-card w-full max-w-md p-6">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Request</p>
+          <h2 class="mt-1 font-display text-xl font-semibold text-lumen-900">New time-off request</h2>
+        </div>
+        <button (click)="close()" class="text-ink-500 hover:text-ink-900">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="mt-5 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="lumen-label">Start date</label>
+            <input formControlName="startDate" type="date" class="lumen-input" />
+          </div>
+          <div>
+            <label class="lumen-label">End date</label>
+            <input formControlName="endDate" type="date" class="lumen-input" />
+          </div>
+        </div>
+        <div>
+          <label class="lumen-label">Reason <span class="text-ink-500">(optional)</span></label>
+          <textarea formControlName="reason" rows="2" placeholder="Conference, family event, etc." class="lumen-input"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" (click)="close()" class="lumen-btn lumen-btn-ghost">Cancel</button>
+          <button type="submit" [disabled]="saving()" class="lumen-btn lumen-btn-primary">
+            <span *ngIf="!saving()">Submit request</span>
+            <span *ngIf="saving()">Submitting…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

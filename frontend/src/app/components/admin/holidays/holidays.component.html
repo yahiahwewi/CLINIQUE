@@ -1,0 +1,73 @@
+<div class="space-y-6">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Calendar</p>
+      <h1 class="mt-1 font-display text-3xl font-semibold text-lumen-900">Clinic holidays</h1>
+      <p class="mt-1 max-w-xl text-sm text-ink-500">Days the clinic is closed clinic-wide. The slot picker hides every doctor's availability on these dates.</p>
+    </div>
+    <button (click)="openCreate()" class="lumen-btn lumen-btn-primary">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      New holiday
+    </button>
+  </header>
+
+  <div *ngIf="error()" class="lumen-card border-l-4 border-l-coral-500 px-4 py-3 text-sm text-coral-600">{{ error() }}</div>
+
+  <div *ngIf="loading()" class="space-y-2">
+    <div class="lumen-skeleton h-12 w-full"></div>
+    <div class="lumen-skeleton h-12 w-full"></div>
+  </div>
+
+  <div *ngIf="!loading() && list().length === 0" class="lumen-card p-10 text-center">
+    <p class="font-display text-lg text-lumen-900">No closure days configured.</p>
+    <p class="mt-1 text-sm text-ink-500">Add public holidays so they're not bookable.</p>
+  </div>
+
+  <ul *ngIf="!loading() && list().length > 0" class="lumen-card lumen-hairline overflow-hidden">
+    <li *ngFor="let h of list()" class="flex items-center gap-4 px-5 py-3" [class.opacity-60]="isPast(h.date)">
+      <div class="w-32 font-mono text-sm text-ink-700">{{ h.date }}</div>
+      <div class="flex-1">
+        <p class="font-medium text-lumen-900">{{ h.name }}</p>
+        <p class="text-[11px] uppercase tracking-wider text-ink-500">{{ formatDate(h.date) }}</p>
+      </div>
+      <span *ngIf="isPast(h.date)" class="lumen-pill lumen-pill-cancelled">Past</span>
+      <div class="flex gap-1.5">
+        <button (click)="openEdit(h)" class="lumen-btn lumen-btn-ghost !px-3 !py-1.5 !text-xs">Edit</button>
+        <button (click)="remove(h)" class="lumen-btn lumen-btn-ghost !px-3 !py-1.5 !text-xs hover:!border-coral-400 hover:!text-coral-600">Remove</button>
+      </div>
+    </li>
+  </ul>
+
+  <!-- Modal -->
+  <div *ngIf="showForm()" class="fixed inset-0 z-40 flex items-center justify-center bg-lumen-900/40 p-4 backdrop-blur-sm">
+    <div class="lumen-card w-full max-w-md p-6">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Holiday</p>
+          <h2 class="mt-1 font-display text-xl font-semibold text-lumen-900">{{ editingId() ? 'Edit' : 'New holiday' }}</h2>
+        </div>
+        <button (click)="close()" class="text-ink-500 hover:text-ink-900">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="mt-5 space-y-4">
+        <div>
+          <label class="lumen-label">Date</label>
+          <input formControlName="date" type="date" class="lumen-input" />
+        </div>
+        <div>
+          <label class="lumen-label">Name</label>
+          <input formControlName="name" type="text" placeholder="e.g. New Year's Day" class="lumen-input" />
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" (click)="close()" class="lumen-btn lumen-btn-ghost">Cancel</button>
+          <button type="submit" [disabled]="saving()" class="lumen-btn lumen-btn-primary">
+            {{ editingId() ? 'Save' : 'Add holiday' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

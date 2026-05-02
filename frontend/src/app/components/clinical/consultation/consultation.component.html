@@ -1,0 +1,370 @@
+<div class="space-y-6">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Consultation</p>
+      <h1 class="mt-1 font-display text-3xl font-semibold text-lumen-900">Clinical workspace</h1>
+      <p class="mt-1 text-sm text-ink-500">Appointment #{{ appointmentId }}</p>
+    </div>
+    <a routerLink="/dashboard/appointments" class="lumen-btn lumen-btn-ghost">← Back to appointments</a>
+  </header>
+
+  <div *ngIf="loading()" class="space-y-3">
+    <div class="lumen-skeleton h-32 w-full"></div>
+    <div class="lumen-skeleton h-48 w-full"></div>
+  </div>
+
+  <div *ngIf="error()" class="lumen-card border-l-4 border-l-coral-500 px-4 py-3 text-sm text-coral-600">{{ error() }}</div>
+
+  <ng-container *ngIf="!loading()">
+    <!-- Patient context strip -->
+    <section *ngIf="patient() as p" class="lumen-card flex flex-wrap items-center gap-6 p-5">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-lumen-100 font-display text-base font-semibold text-lumen-800">
+          {{ (p.fullName || '·').slice(0,1) }}
+        </span>
+        <div>
+          <p class="font-display text-lg font-semibold text-lumen-900">{{ p.fullName }}</p>
+          <p class="text-xs text-ink-500">{{ p.email }}</p>
+        </div>
+      </div>
+      <div class="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4">
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-ink-500">DOB</p>
+          <p class="text-sm text-lumen-900">{{ p.dateOfBirth || '—' }}<span *ngIf="age(p.dateOfBirth ?? undefined)" class="ml-1 text-ink-500">· {{ age(p.dateOfBirth ?? undefined) }}y</span></p>
+        </div>
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-ink-500">Blood type</p>
+          <p class="text-sm text-lumen-900">{{ p.bloodType || '—' }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-ink-500">Allergies</p>
+          <p class="text-sm font-medium" [class.text-coral-600]="p.allergies" [class.text-ink-700]="!p.allergies">
+            {{ p.allergies || 'None on file' }}
+          </p>
+        </div>
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-ink-500">Conditions</p>
+          <p class="text-sm text-lumen-900">{{ p.chronicConditions || '—' }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Medical record ===================== -->
+    <section class="lumen-card p-6">
+      <div class="mb-4 flex items-end justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Clinical notes</p>
+          <h2 class="font-display text-xl font-semibold text-lumen-900">Medical record</h2>
+        </div>
+      </div>
+
+      <form [formGroup]="recordForm" (ngSubmit)="saveRecord()" class="space-y-4">
+        <div>
+          <label class="lumen-label">Chief complaint</label>
+          <textarea formControlName="chiefComplaint" rows="2" class="lumen-input"
+                    placeholder="What brought the patient in (in their words)?"></textarea>
+        </div>
+        <div class="grid gap-4 md:grid-cols-2">
+          <div>
+            <label class="lumen-label">Diagnosis / impression</label>
+            <textarea formControlName="diagnosis" rows="3" class="lumen-input"
+                      placeholder="e.g. Stress-related, rule out cardiac"></textarea>
+          </div>
+          <div>
+            <label class="lumen-label">Plan</label>
+            <textarea formControlName="plan" rows="3" class="lumen-input"
+                      placeholder="ECG today, fasting lipid panel, follow-up 1 week"></textarea>
+          </div>
+        </div>
+        <div>
+          <label class="lumen-label">Private notes <span class="text-ink-500">(doctor-only, never shown to patient)</span></label>
+          <textarea formControlName="privateNotes" rows="2" class="lumen-input"></textarea>
+        </div>
+
+        <div *ngIf="recordSaved()" class="rounded-lg border border-sage-500/30 bg-sage-500/8 px-4 py-2 text-sm text-sage-600">Record saved.</div>
+
+        <div class="flex justify-end gap-2">
+          <button type="submit" [disabled]="recordSaving()" class="lumen-btn lumen-btn-primary">
+            <span *ngIf="!recordSaving()">Save record</span>
+            <span *ngIf="recordSaving()">Saving…</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- AI patient summary -->
+      <div class="mt-6 rounded-xl border border-lumen-700/12 bg-canvas-50 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-lumen-700">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z"/></svg>
+              AI patient summary
+            </p>
+            <p class="mt-1 text-xs text-ink-500">
+              Generates a plain-language summary the patient sees in their visit history. Always review before sharing.
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" (click)="generateSummary(false)"
+                    [disabled]="!aiAvailable() || aiBusy()" class="lumen-btn lumen-btn-ghost">
+              {{ aiBusy() ? 'Thinking…' : 'Preview' }}
+            </button>
+            <button type="button" (click)="generateSummary(true)"
+                    [disabled]="!aiAvailable() || aiBusy()" class="lumen-btn lumen-btn-primary">
+              Generate & share
+            </button>
+          </div>
+        </div>
+        <p *ngIf="!aiAvailable()" class="mt-3 text-xs text-amber-600">
+          AI is not configured (no Groq API key). Set <code>APP_AI_GROQ_API_KEY</code> in your <code>.env</code>.
+        </p>
+        <div *ngIf="aiPreview() && !patientSummary()" class="mt-4 rounded-lg border border-dashed border-lumen-700/20 bg-white p-3 text-sm leading-6 text-ink-700">
+          <p class="mb-1 text-[10px] uppercase tracking-wider text-ink-500">Preview</p>
+          {{ aiPreview() }}
+        </div>
+        <div *ngIf="patientSummary()" class="mt-4 rounded-lg border border-sage-500/30 bg-sage-500/8 p-3 text-sm leading-6 text-ink-700">
+          <p class="mb-1 text-[10px] uppercase tracking-wider text-sage-600">Shared with patient</p>
+          {{ patientSummary() }}
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Prescriptions ===================== -->
+    <section class="lumen-card p-6">
+      <div class="mb-4 flex items-end justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Rx</p>
+          <h2 class="font-display text-xl font-semibold text-lumen-900">Prescriptions</h2>
+        </div>
+        <button (click)="openRxForm()" class="lumen-btn lumen-btn-primary">New prescription</button>
+      </div>
+
+      <div *ngIf="prescriptions().length === 0" class="rounded-lg border border-dashed border-lumen-700/15 px-4 py-6 text-center text-sm text-ink-500">
+        No prescriptions for this appointment yet.
+      </div>
+
+      <ul class="space-y-3">
+        <li *ngFor="let rx of prescriptions()" class="rounded-xl border border-lumen-700/8 p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="font-display text-base font-semibold text-lumen-900">Prescription #{{ rx.id }}</p>
+                <span [ngClass]="rxStatusClass(rx.status)">{{ rx.status }}</span>
+                <span class="text-[11px] uppercase tracking-wider text-ink-500">{{ fmt(rx.createdAt) }}</span>
+              </div>
+              <ul class="mt-2 space-y-1 text-sm text-ink-700">
+                <li *ngFor="let i of rx.items">
+                  <span class="font-medium text-lumen-900">{{ i.drugName }}</span>
+                  <span *ngIf="i.dose"> · {{ i.dose }}</span>
+                  <span *ngIf="i.frequency"> · {{ i.frequency }}</span>
+                  <span *ngIf="i.durationDays"> · {{ i.durationDays }}d</span>
+                  <span *ngIf="i.notes" class="text-ink-500"> — {{ i.notes }}</span>
+                </li>
+              </ul>
+              <p *ngIf="rx.instructions" class="mt-2 text-sm italic text-ink-700">"{{ rx.instructions }}"</p>
+              <p *ngIf="rx.dispensedByName" class="mt-1 text-[11px] uppercase tracking-wider text-sage-600">
+                Dispensed by {{ rx.dispensedByName }} · {{ fmt(rx.dispensedAt) }}
+              </p>
+            </div>
+            <div class="flex flex-col items-end gap-1.5">
+              <a [href]="pdfUrl(rx)" target="_blank" class="lumen-btn lumen-btn-ghost !px-3 !py-1.5 !text-xs">PDF</a>
+              <button *ngIf="rx.status !== 'CANCELLED'" (click)="cancelRx(rx)"
+                      class="lumen-btn lumen-btn-ghost !px-3 !py-1.5 !text-xs hover:!border-coral-400 hover:!text-coral-600">Cancel</button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ===================== Lab orders ===================== -->
+    <section class="lumen-card p-6">
+      <div class="mb-4 flex items-end justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Diagnostics</p>
+          <h2 class="font-display text-xl font-semibold text-lumen-900">Lab orders</h2>
+        </div>
+        <button (click)="openLabForm()" class="lumen-btn lumen-btn-primary">Order test</button>
+      </div>
+
+      <div *ngIf="labOrders().length === 0" class="rounded-lg border border-dashed border-lumen-700/15 px-4 py-6 text-center text-sm text-ink-500">
+        No lab orders for this appointment yet.
+      </div>
+
+      <ul class="space-y-3">
+        <li *ngFor="let o of labOrders()" class="rounded-xl border border-lumen-700/8 p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="font-display text-base font-semibold text-lumen-900">{{ o.testName }}</p>
+                <span [ngClass]="labStatusClass(o.status)">{{ o.status?.replace('_',' ') }}</span>
+                <span *ngIf="o.abnormal" class="lumen-pill lumen-pill-cancelled">ABNORMAL</span>
+                <span class="text-[11px] uppercase tracking-wider text-ink-500">{{ fmt(o.createdAt) }}</span>
+              </div>
+              <p *ngIf="o.instructions" class="mt-1 text-sm text-ink-700">{{ o.instructions }}</p>
+              <div *ngIf="o.resultText" class="mt-2 rounded-md bg-canvas-50 p-3 text-sm text-ink-700">
+                <p class="mb-1 text-[10px] uppercase tracking-wider text-ink-500">Result · {{ o.completedByName }} · {{ fmt(o.completedAt) }}</p>
+                {{ o.resultText }}
+              </div>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ===================== Referrals ===================== -->
+    <section class="lumen-card p-6">
+      <div class="mb-4 flex items-end justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Care continuity</p>
+          <h2 class="font-display text-xl font-semibold text-lumen-900">Referrals</h2>
+        </div>
+        <button (click)="openReferralForm()" [disabled]="!patientId()" class="lumen-btn lumen-btn-primary">Refer to colleague</button>
+      </div>
+
+      <div *ngIf="referrals().length === 0" class="rounded-lg border border-dashed border-lumen-700/15 px-4 py-6 text-center text-sm text-ink-500">
+        No referrals on file for this patient.
+      </div>
+
+      <ul class="space-y-2">
+        <li *ngFor="let r of referrals()" class="rounded-xl border border-lumen-700/8 p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-lumen-900">Dr. {{ r.fromDoctorName }} → Dr. {{ r.toDoctorName }}</p>
+              <p class="text-sm text-ink-700">{{ r.reason }}</p>
+              <p class="text-[11px] uppercase tracking-wider text-ink-500">{{ fmt(r.createdAt) }}</p>
+            </div>
+            <span class="lumen-pill"
+                  [class.lumen-pill-pending]="r.status === 'PENDING'"
+                  [class.lumen-pill-accepted]="r.status === 'ACCEPTED' || r.status === 'COMPLETED'"
+                  [class.lumen-pill-cancelled]="r.status === 'DECLINED'">{{ r.status }}</span>
+          </div>
+        </li>
+      </ul>
+    </section>
+  </ng-container>
+
+  <!-- ===================== Modals ===================== -->
+  <!-- Prescription modal -->
+  <div *ngIf="showPrescriptionForm()" class="fixed inset-0 z-40 flex items-center justify-center bg-lumen-900/40 p-4 backdrop-blur-sm">
+    <div class="lumen-card max-h-[92vh] w-full max-w-2xl overflow-y-auto p-6">
+      <div class="mb-4 flex items-start justify-between">
+        <h3 class="font-display text-xl font-semibold text-lumen-900">New prescription</h3>
+        <button (click)="closeRxForm()" class="text-ink-500 hover:text-ink-900">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form [formGroup]="prescriptionForm" (ngSubmit)="saveRx()" class="space-y-4">
+        <div formArrayName="items" class="space-y-3">
+          <div *ngFor="let item of prescriptionItems.controls; let i = index" [formGroupName]="i"
+               class="rounded-lg border border-lumen-700/12 p-3">
+            <div class="flex items-center justify-between">
+              <p class="text-[11px] uppercase tracking-wider text-ink-500">Medication {{ i + 1 }}</p>
+              <button type="button" (click)="removeRxItem(i)" *ngIf="prescriptionItems.length > 1"
+                      class="text-xs text-coral-600 hover:underline">Remove</button>
+            </div>
+            <div class="mt-2 grid gap-3 md:grid-cols-2">
+              <div class="md:col-span-2">
+                <label class="lumen-label">Drug name</label>
+                <input formControlName="drugName" class="lumen-input" placeholder="e.g. Lisinopril" />
+              </div>
+              <div>
+                <label class="lumen-label">Dose</label>
+                <input formControlName="dose" class="lumen-input" placeholder="10 mg" />
+              </div>
+              <div>
+                <label class="lumen-label">Frequency</label>
+                <input formControlName="frequency" class="lumen-input" placeholder="once daily" />
+              </div>
+              <div>
+                <label class="lumen-label">Duration (days)</label>
+                <input type="number" min="1" formControlName="durationDays" class="lumen-input" />
+              </div>
+              <div>
+                <label class="lumen-label">Notes</label>
+                <input formControlName="notes" class="lumen-input" placeholder="Take with food" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <button type="button" (click)="addRxItem()" class="lumen-btn lumen-btn-ghost">+ Add medication</button>
+
+        <div>
+          <label class="lumen-label">Instructions for the patient</label>
+          <textarea formControlName="instructions" rows="2" class="lumen-input"
+                    placeholder="General guidance, warnings, follow-up advice"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" (click)="closeRxForm()" class="lumen-btn lumen-btn-ghost">Cancel</button>
+          <button type="submit" [disabled]="rxSaving()" class="lumen-btn lumen-btn-primary">
+            <span *ngIf="!rxSaving()">Issue prescription</span>
+            <span *ngIf="rxSaving()">Saving…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lab order modal -->
+  <div *ngIf="showLabForm()" class="fixed inset-0 z-40 flex items-center justify-center bg-lumen-900/40 p-4 backdrop-blur-sm">
+    <div class="lumen-card w-full max-w-md p-6">
+      <div class="mb-4 flex items-start justify-between">
+        <h3 class="font-display text-xl font-semibold text-lumen-900">Order a test</h3>
+        <button (click)="closeLabForm()" class="text-ink-500 hover:text-ink-900">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form [formGroup]="labForm" (ngSubmit)="saveLab()" class="space-y-4">
+        <div>
+          <label class="lumen-label">Test</label>
+          <input formControlName="testName" class="lumen-input" placeholder="e.g. Fasting lipid panel" />
+        </div>
+        <div>
+          <label class="lumen-label">Instructions <span class="text-ink-500">(optional)</span></label>
+          <textarea formControlName="instructions" rows="3" class="lumen-input"
+                    placeholder="Fasting required, draw morning."></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" (click)="closeLabForm()" class="lumen-btn lumen-btn-ghost">Cancel</button>
+          <button type="submit" [disabled]="labSaving()" class="lumen-btn lumen-btn-primary">
+            <span *ngIf="!labSaving()">Order test</span>
+            <span *ngIf="labSaving()">Saving…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Referral modal -->
+  <div *ngIf="showReferralForm()" class="fixed inset-0 z-40 flex items-center justify-center bg-lumen-900/40 p-4 backdrop-blur-sm">
+    <div class="lumen-card w-full max-w-md p-6">
+      <div class="mb-4 flex items-start justify-between">
+        <h3 class="font-display text-xl font-semibold text-lumen-900">Refer to a colleague</h3>
+        <button (click)="closeReferralForm()" class="text-ink-500 hover:text-ink-900">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form [formGroup]="referralForm" (ngSubmit)="saveReferral()" class="space-y-4">
+        <div>
+          <label class="lumen-label">Refer to</label>
+          <select formControlName="toDoctorId" class="lumen-input">
+            <option [ngValue]="null">Select a doctor…</option>
+            <option *ngFor="let d of doctors()" [ngValue]="d.id">{{ d.fullName }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="lumen-label">Reason</label>
+          <textarea formControlName="reason" rows="3" class="lumen-input"
+                    placeholder="Suspected arrhythmia — please evaluate."></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" (click)="closeReferralForm()" class="lumen-btn lumen-btn-ghost">Cancel</button>
+          <button type="submit" [disabled]="referralSaving()" class="lumen-btn lumen-btn-primary">
+            <span *ngIf="!referralSaving()">Send referral</span>
+            <span *ngIf="referralSaving()">Sending…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

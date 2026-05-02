@@ -1,0 +1,106 @@
+<div class="space-y-6">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Communications</p>
+      <h1 class="mt-1 font-display text-3xl font-semibold text-lumen-900">Announcements</h1>
+      <p class="mt-1 max-w-xl text-sm text-ink-500">Push a banner to staff or patients. Useful for outage notices, schedule changes, and policy updates.</p>
+    </div>
+    <button (click)="openCreate()" class="lumen-btn lumen-btn-primary">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      New announcement
+    </button>
+  </header>
+
+  <div *ngIf="error()" class="lumen-card border-l-4 border-l-coral-500 px-4 py-3 text-sm text-coral-600">{{ error() }}</div>
+
+  <div *ngIf="loading()" class="space-y-2">
+    <div class="lumen-skeleton h-20 w-full"></div>
+    <div class="lumen-skeleton h-20 w-full"></div>
+  </div>
+
+  <div *ngIf="!loading() && list().length === 0" class="lumen-card p-10 text-center">
+    <p class="font-display text-lg text-lumen-900">No announcements yet.</p>
+  </div>
+
+  <ul *ngIf="!loading() && list().length > 0" class="space-y-3">
+    <li *ngFor="let a of list()" class="lumen-card overflow-hidden">
+      <div class="flex items-start gap-4 border-l-4 p-5" [ngClass]="toneClass(a.tone)">
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <p class="font-display text-base font-semibold text-lumen-900">{{ a.title }}</p>
+            <span class="rounded-full bg-lumen-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-lumen-800">{{ a.audience }}</span>
+            <span class="rounded-full bg-canvas-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink-700">{{ a.tone }}</span>
+            <span *ngIf="a.active" class="lumen-pill lumen-pill-accepted">Live</span>
+            <span *ngIf="!a.active" class="lumen-pill lumen-pill-cancelled">Off</span>
+          </div>
+          <p class="mt-1 text-sm leading-6 text-ink-700">{{ a.body }}</p>
+          <p class="mt-2 text-[11px] uppercase tracking-wider text-ink-500">
+            Created {{ formatDate(a.createdAt) }}<span *ngIf="a.expiresAt"> · expires {{ formatDate(a.expiresAt) }}</span>
+          </p>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <button (click)="openEdit(a)" class="lumen-btn lumen-btn-ghost !px-3 !py-1.5 !text-xs">Edit</button>
+          <button (click)="remove(a)" class="lumen-btn lumen-btn-ghost !px-3 !py-1.5 !text-xs hover:!border-coral-400 hover:!text-coral-600">Remove</button>
+        </div>
+      </div>
+    </li>
+  </ul>
+
+  <!-- Modal -->
+  <div *ngIf="showForm()" class="fixed inset-0 z-40 flex items-center justify-center bg-lumen-900/40 p-4 backdrop-blur-sm">
+    <div class="lumen-card w-full max-w-lg p-6">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Announcement</p>
+          <h2 class="mt-1 font-display text-xl font-semibold text-lumen-900">{{ editingId() ? 'Edit' : 'New announcement' }}</h2>
+        </div>
+        <button (click)="close()" class="text-ink-500 hover:text-ink-900">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="mt-5 space-y-4">
+        <div>
+          <label class="lumen-label">Title</label>
+          <input formControlName="title" type="text" class="lumen-input" />
+        </div>
+        <div>
+          <label class="lumen-label">Body</label>
+          <textarea formControlName="body" rows="3" class="lumen-input"></textarea>
+        </div>
+        <div class="grid gap-4 md:grid-cols-2">
+          <div>
+            <label class="lumen-label">Audience</label>
+            <select formControlName="audience" class="lumen-input">
+              <option value="ALL">Everyone</option>
+              <option value="STAFF">Staff only</option>
+              <option value="PATIENTS">Patients only</option>
+            </select>
+          </div>
+          <div>
+            <label class="lumen-label">Tone</label>
+            <select formControlName="tone" class="lumen-input">
+              <option value="INFO">Info</option>
+              <option value="SUCCESS">Success</option>
+              <option value="WARNING">Warning</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="lumen-label">Expires at <span class="text-ink-500">(optional)</span></label>
+          <input formControlName="expiresAt" type="datetime-local" class="lumen-input" />
+        </div>
+        <label class="flex items-center gap-2 text-sm text-ink-700">
+          <input formControlName="active" type="checkbox" class="h-4 w-4 accent-lumen-700" /> Active
+        </label>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" (click)="close()" class="lumen-btn lumen-btn-ghost">Cancel</button>
+          <button type="submit" [disabled]="saving()" class="lumen-btn lumen-btn-primary">
+            {{ editingId() ? 'Save' : 'Publish' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

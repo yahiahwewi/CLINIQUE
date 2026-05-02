@@ -1,110 +1,252 @@
-<div class="space-y-6">
-  <div class="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-900 px-8 py-10 text-white shadow-[0_30px_80px_-30px_rgba(8,47,73,0.8)]">
-    <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-300/20 blur-3xl"></div>
-    <div class="absolute bottom-0 left-1/3 h-28 w-28 rounded-full bg-emerald-300/10 blur-2xl"></div>
-    <div class="relative">
-      <p class="text-sm uppercase tracking-[0.3em] text-cyan-200">Hospital Operations</p>
-      <h1 class="mt-3 text-4xl font-bold">Welcome, {{ currentUser?.firstName }}</h1>
-      <p class="mt-3 max-w-2xl text-sm text-slate-200">{{ roleSummary() }}</p>
+<!-- ==============================================================
+     PATIENT VIEW
+     ============================================================== -->
+<ng-container *ngIf="!hasRole('ROLE_DOCTOR') && !hasRole('ROLE_NURSE') && !hasRole('ROLE_ADMIN')">
+  <!-- Hero: next appointment -->
+  <section class="lumen-card overflow-hidden">
+    <div class="grid gap-0 md:grid-cols-[1.4fr_1fr]">
+      <div class="relative bg-gradient-to-br from-lumen-700 via-lumen-700 to-lumen-800 p-8 text-canvas-100">
+        <div class="absolute inset-0 opacity-25"
+             style="background:radial-gradient(circle at 80% 100%, #4a8e94 0%, transparent 45%);"></div>
+        <div class="relative">
+          <p class="text-[11px] uppercase tracking-[0.2em] text-lumen-200">Your next appointment</p>
 
-      <div class="mt-6 flex flex-wrap gap-2">
-        <span *ngFor="let role of currentUser?.roles" class="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm font-medium">
-          {{ role }}
-        </span>
+          <ng-container *ngIf="loadingAppointments(); else nextAppt">
+            <div class="mt-4 space-y-3">
+              <div class="lumen-skeleton h-7 w-2/3"></div>
+              <div class="lumen-skeleton h-4 w-1/2"></div>
+            </div>
+          </ng-container>
+
+          <ng-template #nextAppt>
+            <ng-container *ngIf="nextAppointment(); else noNext">
+              <h2 class="mt-3 font-display text-3xl font-semibold leading-tight text-canvas-50">{{ nextAppointment()!.title }}</h2>
+              <p class="mt-2 text-sm leading-6 text-canvas-100/85">{{ nextAppointment()!.description }}</p>
+
+              <div class="mt-6 flex flex-wrap items-end gap-x-8 gap-y-3">
+                <div>
+                  <p class="text-[11px] uppercase tracking-wider text-lumen-200">When</p>
+                  <p class="mt-1 font-display text-xl font-semibold text-canvas-50">{{ formatDate(nextAppointment()!.appointmentDateTime) }}</p>
+                  <p class="mt-0.5 text-xs text-lumen-200">{{ countdown(nextAppointment()!.appointmentDateTime) }}</p>
+                </div>
+                <div>
+                  <p class="text-[11px] uppercase tracking-wider text-lumen-200">With</p>
+                  <p class="mt-1 font-display text-xl font-semibold text-canvas-50">Dr. {{ nextAppointment()!.doctor.fullName }}</p>
+                </div>
+              </div>
+
+              <div class="mt-7 flex flex-wrap gap-2">
+                <a routerLink="/dashboard/appointments" class="lumen-btn bg-canvas-50 text-lumen-800 hover:bg-canvas-100">Manage</a>
+                <span [ngClass]="statusPillClass(nextAppointment()!.status)" class="!bg-canvas-50/10 !text-canvas-50">
+                  {{ nextAppointment()!.status }}
+                </span>
+              </div>
+            </ng-container>
+            <ng-template #noNext>
+              <h2 class="mt-3 font-display text-3xl font-semibold leading-tight text-canvas-50">No upcoming appointment.</h2>
+              <p class="mt-3 max-w-md text-sm leading-7 text-canvas-100/80">
+                Pick a doctor and an open slot, and you'll see it appear here with a countdown.
+              </p>
+              <a routerLink="/dashboard/appointments" class="lumen-btn mt-6 bg-canvas-50 text-lumen-800 hover:bg-canvas-100">Book an appointment</a>
+            </ng-template>
+          </ng-template>
+        </div>
       </div>
 
-      <div class="mt-8 grid gap-4 md:grid-cols-3">
-        <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
-          <p class="text-xs uppercase tracking-[0.25em] text-cyan-100/80">Visibility</p>
-          <p class="mt-3 text-3xl font-bold">{{ appointments.length }}</p>
-          <p class="mt-2 text-sm text-slate-200">Appointments currently visible to your role</p>
+      <div class="grid grid-cols-2 gap-px bg-lumen-700/8 md:grid-cols-1">
+        <div class="bg-white p-6">
+          <p class="text-[11px] uppercase tracking-wider text-ink-500">Upcoming</p>
+          <p class="mt-2 font-display text-3xl font-semibold text-lumen-900">{{ upcoming().length }}</p>
+          <p class="mt-1 text-xs text-ink-500">Future appointments on your calendar</p>
         </div>
-        <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
-          <p class="text-xs uppercase tracking-[0.25em] text-cyan-100/80">Next Step</p>
-          <p class="mt-3 text-lg font-semibold">Start from the overview</p>
-          <p class="mt-2 text-sm text-slate-200">Use the workspace when you are ready to edit, accept, or schedule.</p>
-        </div>
-        <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
-          <p class="text-xs uppercase tracking-[0.25em] text-cyan-100/80">Quick Route</p>
-          <a routerLink="/dashboard/appointments" class="mt-3 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-50">
-            Open appointment workspace
-          </a>
-          <p class="mt-2 text-sm text-slate-200">Go directly to the action queue for your role.</p>
+        <div class="bg-white p-6">
+          <p class="text-[11px] uppercase tracking-wider text-ink-500">Past visits</p>
+          <p class="mt-2 font-display text-3xl font-semibold text-lumen-900">{{ past().length }}</p>
+          <p class="mt-1 text-xs text-ink-500">Completed or expired bookings</p>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div class="grid gap-5 lg:grid-cols-3">
-    <a routerLink="/dashboard/appointments" class="rounded-2xl bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-      <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Appointments</p>
-      <h2 class="mt-3 text-xl font-semibold text-slate-900">Go to appointment workspace</h2>
-      <p class="mt-2 text-sm text-slate-500">View the queue and use the actions available for your role.</p>
-    </a>
-
-    <a *ngIf="hasRole('ROLE_ADMIN')" routerLink="/dashboard/admin/users" class="rounded-2xl bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-      <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Accounts</p>
-      <h2 class="mt-3 text-xl font-semibold text-slate-900">Manage staff accounts</h2>
-      <p class="mt-2 text-sm text-slate-500">Create doctors, nurses, admins, and patient accounts from one place.</p>
-    </a>
-
-    <a *ngIf="hasRole('ROLE_ADMIN')" routerLink="/dashboard/admin/dashboard" class="rounded-2xl bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-      <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Reporting</p>
-      <h2 class="mt-3 text-xl font-semibold text-slate-900">Open admin summary</h2>
-      <p class="mt-2 text-sm text-slate-500">Track user and appointment counts across the system.</p>
-    </a>
-  </div>
-
-  <section class="rounded-3xl bg-white p-6 shadow-sm">
-    <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-      <div>
-        <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Queue Snapshot</p>
-        <h2 class="mt-2 text-2xl font-bold text-slate-900">{{ appointmentHeading() }}</h2>
-      </div>
-      <a routerLink="/dashboard/appointments" class="text-sm font-semibold text-sky-700 hover:text-sky-900">Open full appointment workspace</a>
-    </div>
-
-    <div *ngIf="loadingAppointments" class="mt-6 text-sm text-slate-500">Loading appointments...</div>
-    <div *ngIf="appointmentsError" class="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-      {{ appointmentsError }}
-    </div>
-
-    <div *ngIf="!loadingAppointments && !appointmentsError && appointments.length === 0" class="mt-6 rounded-2xl bg-slate-50 px-4 py-6 text-sm text-slate-500">
-      No appointments are currently visible for this account.
-    </div>
-
-    <div *ngIf="!loadingAppointments && appointments.length > 0" class="mt-6 grid gap-4">
-      <article *ngFor="let appointment of appointments | slice:0:5" class="rounded-2xl border border-slate-200 p-4">
-        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h3 class="text-lg font-semibold text-slate-900">{{ appointment.title }}</h3>
-            <p class="mt-1 text-sm text-slate-500">{{ appointment.description }}</p>
-          </div>
-          <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-            {{ appointment.status }}
-          </span>
-        </div>
-
-        <div class="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-4">
-          <div>
-            <p class="font-semibold text-slate-800">Patient</p>
-            <p>{{ appointment.patient.fullName }}</p>
-          </div>
-          <div>
-            <p class="font-semibold text-slate-800">Doctor</p>
-            <p>{{ appointment.doctor.fullName }}</p>
-          </div>
-          <div>
-            <p class="font-semibold text-slate-800">Nurse</p>
-            <p>{{ appointment.nurse?.fullName || 'Not assigned' }}</p>
-          </div>
-          <div>
-            <p class="font-semibold text-slate-800">Date & Time</p>
-            <p>{{ formatDate(appointment.appointmentDateTime) }}</p>
-          </div>
-        </div>
-      </article>
     </div>
   </section>
-</div>
 
+  <!-- Upcoming list -->
+  <section class="mt-8">
+    <div class="mb-4 flex items-end justify-between">
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Schedule</p>
+        <h3 class="font-display text-xl font-semibold text-lumen-900">Upcoming appointments</h3>
+      </div>
+      <a routerLink="/dashboard/appointments" class="text-sm font-medium text-lumen-700 hover:text-lumen-900">Open workspace →</a>
+    </div>
+
+    <div *ngIf="loadingAppointments()" class="space-y-2">
+      <div class="lumen-skeleton h-16 w-full"></div>
+      <div class="lumen-skeleton h-16 w-full"></div>
+    </div>
+
+    <div *ngIf="!loadingAppointments() && upcoming().length === 0" class="lumen-card p-10 text-center">
+      <p class="font-display text-lg text-lumen-900">Nothing on the calendar.</p>
+      <p class="mt-1 text-sm text-ink-500">Book a slot and it will appear here.</p>
+    </div>
+
+    <ul *ngIf="!loadingAppointments() && upcoming().length > 0" class="lumen-card lumen-hairline overflow-hidden">
+      <li *ngFor="let a of upcoming()" class="flex items-center gap-4 px-5 py-4">
+        <div class="w-16 text-center">
+          <p class="font-display text-2xl font-semibold leading-none text-lumen-700">{{ formatTime(a.appointmentDateTime) }}</p>
+          <p class="mt-1 text-[11px] uppercase tracking-wider text-ink-500">{{ formatDate(a.appointmentDateTime).split(',')[0] }}</p>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-semibold text-lumen-900">{{ a.title }}</p>
+          <p class="mt-0.5 truncate text-xs text-ink-500">Dr. {{ a.doctor.fullName }} · {{ a.description }}</p>
+        </div>
+        <span [ngClass]="statusPillClass(a.status)">{{ a.status }}</span>
+      </li>
+    </ul>
+  </section>
+</ng-container>
+
+<!-- ==============================================================
+     DOCTOR / NURSE VIEW
+     ============================================================== -->
+<ng-container *ngIf="hasRole('ROLE_DOCTOR') || hasRole('ROLE_NURSE')">
+  <!-- KPI strip -->
+  <section class="grid gap-4 sm:grid-cols-3">
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Today</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-lumen-900">{{ todayAppointments().length }}</p>
+      <p class="mt-1 text-xs text-ink-500">Visits scheduled for today</p>
+    </div>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">This week</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-lumen-900">{{ thisWeekCount() }}</p>
+      <p class="mt-1 text-xs text-ink-500">Appointments in the next 7 days</p>
+    </div>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Pending</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-lumen-900">{{ pendingForMe() }}</p>
+      <p class="mt-1 text-xs text-ink-500">Awaiting your decision</p>
+    </div>
+  </section>
+
+  <!-- Today's agenda -->
+  <section class="mt-8">
+    <div class="mb-4 flex items-end justify-between">
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Agenda</p>
+        <h3 class="font-display text-xl font-semibold text-lumen-900">Today</h3>
+      </div>
+      <a *ngIf="hasRole('ROLE_DOCTOR')" routerLink="/dashboard/availability" class="text-sm font-medium text-lumen-700 hover:text-lumen-900">Manage availability →</a>
+    </div>
+
+    <div *ngIf="loadingAppointments()" class="space-y-2">
+      <div class="lumen-skeleton h-16 w-full"></div>
+      <div class="lumen-skeleton h-16 w-full"></div>
+    </div>
+
+    <div *ngIf="!loadingAppointments() && todayAppointments().length === 0" class="lumen-card p-10 text-center">
+      <p class="font-display text-lg text-lumen-900">A clear day ahead.</p>
+      <p class="mt-1 text-sm text-ink-500">No appointments scheduled for today.</p>
+    </div>
+
+    <!-- Vertical timeline -->
+    <ol *ngIf="!loadingAppointments() && todayAppointments().length > 0" class="relative ml-2">
+      <div class="absolute left-1.5 top-2 bottom-2 w-px bg-lumen-700/12"></div>
+      <li *ngFor="let a of todayAppointments()" class="relative flex gap-4 pb-5 pl-8">
+        <span class="absolute left-0 top-2 h-3 w-3 rounded-full bg-lumen-500 ring-4 ring-canvas-100"></span>
+        <div class="lumen-card lumen-card-hover flex flex-1 items-center gap-4 px-5 py-4">
+          <div class="w-16 text-center">
+            <p class="font-display text-2xl font-semibold leading-none text-lumen-700">{{ formatTime(a.appointmentDateTime) }}</p>
+            <p class="mt-1 text-[11px] uppercase tracking-wider text-ink-500">{{ countdown(a.appointmentDateTime) }}</p>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-semibold text-lumen-900">{{ a.title }}</p>
+            <p class="mt-0.5 truncate text-xs text-ink-500">{{ a.patient.fullName }} · {{ a.description }}</p>
+          </div>
+          <span [ngClass]="statusPillClass(a.status)">{{ a.status }}</span>
+        </div>
+      </li>
+    </ol>
+  </section>
+</ng-container>
+
+<!-- ==============================================================
+     ADMIN VIEW
+     ============================================================== -->
+<ng-container *ngIf="hasRole('ROLE_ADMIN')">
+  <!-- KPI tiles -->
+  <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <a routerLink="/dashboard/admin/approvals"
+       class="lumen-card lumen-card-hover block p-5"
+       [class.ring-2]="(stats()?.pendingApprovals ?? 0) > 0"
+       [class.ring-amber-300]="(stats()?.pendingApprovals ?? 0) > 0">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Pending approvals</p>
+      <p class="mt-2 font-display text-3xl font-semibold"
+         [class.text-amber-600]="(stats()?.pendingApprovals ?? 0) > 0"
+         [class.text-lumen-900]="(stats()?.pendingApprovals ?? 0) === 0">
+        {{ stats()?.pendingApprovals ?? 0 }}
+      </p>
+      <p class="mt-1 text-xs text-ink-500">
+        {{ (stats()?.pendingApprovals ?? 0) > 0 ? 'Tap to review' : 'Nothing waiting' }}
+      </p>
+    </a>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Total users</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-lumen-900">{{ stats()?.totalUsers ?? '—' }}</p>
+      <p class="mt-1 text-xs text-ink-500">{{ stats()?.activeUsers ?? 0 }} active</p>
+    </div>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Appointments</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-lumen-900">{{ stats()?.totalAppointments ?? '—' }}</p>
+      <p class="mt-1 text-xs text-ink-500">All time</p>
+    </div>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Accepted</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-sage-600">{{ stats()?.acceptedAppointments ?? '—' }}</p>
+      <p class="mt-1 text-xs text-ink-500">Confirmed visits</p>
+    </div>
+  </section>
+
+  <!-- Quick actions -->
+  <section class="mt-8 grid gap-4 md:grid-cols-3">
+    <a routerLink="/dashboard/admin/users" class="lumen-card lumen-card-hover block p-6">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Accounts</p>
+      <h3 class="mt-3 font-display text-lg font-semibold text-lumen-900">Manage users</h3>
+      <p class="mt-1 text-sm text-ink-500">Create and govern doctor, nurse, admin, and patient accounts.</p>
+    </a>
+    <a routerLink="/dashboard/appointments" class="lumen-card lumen-card-hover block p-6">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Operations</p>
+      <h3 class="mt-3 font-display text-lg font-semibold text-lumen-900">All appointments</h3>
+      <p class="mt-1 text-sm text-ink-500">Edit, reassign, or cancel any appointment in the system.</p>
+    </a>
+    <a routerLink="/dashboard/admin/audit" class="lumen-card lumen-card-hover block p-6">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Compliance</p>
+      <h3 class="mt-3 font-display text-lg font-semibold text-lumen-900">Audit log</h3>
+      <p class="mt-1 text-sm text-ink-500">Every state change, with timestamp and actor.</p>
+    </a>
+  </section>
+
+  <!-- Recent activity (uses appointment list as recent feed) -->
+  <section class="mt-8">
+    <div class="mb-4 flex items-end justify-between">
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Live activity</p>
+        <h3 class="font-display text-xl font-semibold text-lumen-900">Recent appointments</h3>
+      </div>
+      <a routerLink="/dashboard/appointments" class="text-sm font-medium text-lumen-700 hover:text-lumen-900">Open workspace →</a>
+    </div>
+
+    <ul class="lumen-card lumen-hairline overflow-hidden">
+      <li *ngFor="let a of upcoming() | slice:0:6" class="flex items-center gap-4 px-5 py-4">
+        <div class="w-16 text-center">
+          <p class="font-display text-2xl font-semibold leading-none text-lumen-700">{{ formatTime(a.appointmentDateTime) }}</p>
+          <p class="mt-1 text-[11px] uppercase tracking-wider text-ink-500">{{ formatDate(a.appointmentDateTime).split(',')[0] }}</p>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-semibold text-lumen-900">{{ a.title }}</p>
+          <p class="mt-0.5 truncate text-xs text-ink-500">{{ a.patient.fullName }} → Dr. {{ a.doctor.fullName }}</p>
+        </div>
+        <span [ngClass]="statusPillClass(a.status)">{{ a.status }}</span>
+      </li>
+      <li *ngIf="upcoming().length === 0" class="px-5 py-10 text-center text-sm text-ink-500">No upcoming activity yet.</li>
+    </ul>
+  </section>
+</ng-container>

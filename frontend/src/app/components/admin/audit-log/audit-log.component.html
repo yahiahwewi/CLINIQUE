@@ -1,0 +1,68 @@
+<div class="space-y-6">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Compliance</p>
+      <h1 class="mt-1 font-display text-3xl font-semibold text-lumen-900">Audit log</h1>
+      <p class="mt-1 text-sm text-ink-500">A timestamped record of every state change in the system.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <input
+        type="text"
+        [ngModel]="filter()"
+        (ngModelChange)="filter.set($event)"
+        placeholder="Filter by action, actor, or summary…"
+        class="lumen-input !w-72"
+      />
+      <button (click)="refresh()" class="lumen-btn lumen-btn-ghost" aria-label="Refresh">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 0 1 15.5-6.3L21 8" /><path d="M21 3v5h-5" />
+          <path d="M21 12a9 9 0 0 1-15.5 6.3L3 16" /><path d="M3 21v-5h5" />
+        </svg>
+        Refresh
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="error()" class="lumen-card border-l-4 border-l-coral-500 px-4 py-3 text-sm text-coral-600">
+    {{ error() }}
+  </div>
+
+  <div *ngIf="loading()" class="space-y-2">
+    <div class="lumen-skeleton h-12 w-full"></div>
+    <div class="lumen-skeleton h-12 w-full"></div>
+    <div class="lumen-skeleton h-12 w-full"></div>
+  </div>
+
+  <div *ngIf="!loading() && filtered().length === 0" class="lumen-card p-10 text-center">
+    <p class="font-display text-lg text-lumen-900">No matching events.</p>
+    <p class="mt-1 text-sm text-ink-500">Try a different filter, or refresh.</p>
+  </div>
+
+  <div *ngIf="!loading() && filtered().length > 0" class="lumen-card overflow-hidden">
+    <table class="w-full text-left text-sm">
+      <thead class="border-b border-lumen-700/8 bg-canvas-50/60">
+        <tr class="text-[11px] uppercase tracking-[0.14em] text-ink-500">
+          <th class="px-5 py-3 font-medium">When</th>
+          <th class="px-5 py-3 font-medium">Actor</th>
+          <th class="px-5 py-3 font-medium">Action</th>
+          <th class="px-5 py-3 font-medium">Summary</th>
+        </tr>
+      </thead>
+      <tbody class="lumen-hairline">
+        <tr *ngFor="let log of filtered()" class="transition hover:bg-canvas-50/50">
+          <td class="whitespace-nowrap px-5 py-3 align-top text-ink-500" style="font-family: var(--font-mono); font-size: 12px;">
+            {{ formatDate(log.createdAt) }}
+          </td>
+          <td class="px-5 py-3 align-top">
+            <p class="font-medium text-lumen-900">{{ log.actorName }}</p>
+            <p *ngIf="log.actorEmail" class="text-xs text-ink-500">{{ log.actorEmail }}</p>
+          </td>
+          <td class="whitespace-nowrap px-5 py-3 align-top">
+            <span [ngClass]="actionTone(log.action)" class="font-mono text-xs font-semibold uppercase tracking-wider">{{ log.action }}</span>
+          </td>
+          <td class="px-5 py-3 align-top text-ink-700">{{ log.summary }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -48,6 +48,14 @@ public class User {
     @Builder.Default
     private Boolean enabled = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 16)
+    @Builder.Default
+    private ApprovalStatus approvalStatus = ApprovalStatus.APPROVED;
+
+    @Column(length = 16)
+    private String requestedRole;
+
     @Column(length = 120)
     private String resetPasswordToken;
 

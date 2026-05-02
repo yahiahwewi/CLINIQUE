@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -23,4 +24,17 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByNurseIdOrderByAppointmentDateTimeAsc(Long nurseId);
 
     long countByStatus(AppointmentStatus status);
+
+    List<Appointment> findByDoctorIdAndAppointmentDateTimeBetweenAndStatusNot(
+            Long doctorId,
+            LocalDateTime start,
+            LocalDateTime end,
+            AppointmentStatus excludedStatus
+    );
+
+    boolean existsByDoctorIdAndAppointmentDateTimeAndStatusNot(
+            Long doctorId,
+            LocalDateTime appointmentDateTime,
+            AppointmentStatus excludedStatus
+    );
 }

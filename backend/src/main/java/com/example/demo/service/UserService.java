@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.UserDTO;
 import com.example.demo.dto.UserStatisticsDTO;
 import com.example.demo.dto.AdminUserCreateRequest;
+import com.example.demo.entity.ApprovalStatus;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.exception.ResourceNotFoundException;
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -26,19 +28,25 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final AppointmentService appointmentService;
+    private final AuditService auditService;
+    private final NotificationService notificationService;
 
     public UserService(
             UserRepository userRepository,
             RoleRepository roleRepository,
             UserMapper userMapper,
             PasswordEncoder passwordEncoder,
-            AppointmentService appointmentService
+            AppointmentService appointmentService,
+            AuditService auditService,
+            NotificationService notificationService
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.appointmentService = appointmentService;
+        this.auditService = auditService;
+        this.notificationService = notificationService;
     }
 
     public UserDTO getUserById(Long id) {
@@ -131,6 +139,7 @@ public class UserService {
                 .totalUsers(total)
                 .activeUsers(active)
                 .inactiveUsers(inactive)
+                .pendingApprovals(userRepository.countByApprovalStatus(ApprovalStatus.PENDING))
                 .totalAppointments(appointmentService.countAllAppointments())
                 .pendingAppointments(appointmentService.countPendingAppointments())
                 .acceptedAppointments(appointmentService.countAcceptedAppointments())
@@ -139,6 +148,80 @@ public class UserService {
 
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserDTO> getPendingApprovals() {
+        return userRepository.findByApprovalStatusOrderByIdDesc(ApprovalStatus.PENDING).stream()
+                .map(userMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public long countPendingApprovals() {
+        return userRepository.countByApprovalStatus(ApprovalStatus.PENDING);
+    }
+
+    @Transactional
+    public UserDTO approveUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        if (user.getApprovalStatus() == ApprovalStatus.APPROVED) {
+            return userMapper.toDTO(user);
+        }
+
+        // Grant the role they requested at signup, if any.
+        if (user.getRequestedRole() != null && !user.getRequestedRole().isBlank()) {
+            roleRepository.findByName(user.getRequestedRole()).ifPresent(role -> {
+                Set<Role> roles = user.getRoles() == null ? new HashSet<>() : new HashSet<>(user.getRoles());
+                roles.add(role);
+                user.setRoles(roles);
+            });
+        }
+        user.setApprovalStatus(ApprovalStatus.APPROVED);
+        user.setEnabled(true);
+        User saved = userRepository.save(user);
+
+        auditService.record(
+                "USER_APPROVED",
+                "User",
+                saved.getId(),
+                String.format("Approved %s (%s) — granted %s",
+                        saved.getEmail(),
+                        saved.getRequestedRole() == null ? "USER" : saved.getRequestedRole(),
+                        saved.getRoles().stream().map(Role::getName).collect(Collectors.joining(", ")))
+        );
+
+        notificationService.notify(
+                saved,
+                "Your account has been approved",
+                "Welcome to Lumen Health. You can now sign in.",
+                "/login"
+        );
+
+        return userMapper.toDTO(saved);
+    }
+
+    @Transactional
+    public UserDTO rejectUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        user.setApprovalStatus(ApprovalStatus.REJECTED);
+        user.setEnabled(false);
+        User saved = userRepository.save(user);
+
+        auditService.record(
+                "USER_REJECTED",
+                "User",
+                saved.getId(),
+                String.format("Rejected %s (requested %s)",
+                        saved.getEmail(),
+                        saved.getRequestedRole() == null ? "USER" : saved.getRequestedRole())
+        );
+
+        return userMapper.toDTO(saved);
     }
 
     private String normalizeEmail(String email) {

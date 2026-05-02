@@ -1,0 +1,68 @@
+<div class="space-y-6">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Approvals queue</p>
+      <h1 class="mt-1 font-display text-3xl font-semibold text-lumen-900">Pending registrations</h1>
+      <p class="mt-1 max-w-xl text-sm text-ink-500">
+        Review users who signed up and grant or deny access. Approved users are notified in-app and can sign in immediately.
+      </p>
+    </div>
+    <button (click)="refresh()" class="lumen-btn lumen-btn-ghost">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 0 1 15.5-6.3L21 8" /><path d="M21 3v5h-5" />
+        <path d="M21 12a9 9 0 0 1-15.5 6.3L3 16" /><path d="M3 21v-5h5" />
+      </svg>
+      Refresh
+    </button>
+  </header>
+
+  <div *ngIf="error()" class="lumen-card border-l-4 border-l-coral-500 px-4 py-3 text-sm text-coral-600">
+    {{ error() }}
+  </div>
+
+  <div *ngIf="loading()" class="space-y-2">
+    <div class="lumen-skeleton h-20 w-full"></div>
+    <div class="lumen-skeleton h-20 w-full"></div>
+    <div class="lumen-skeleton h-20 w-full"></div>
+  </div>
+
+  <div *ngIf="!loading() && pending().length === 0" class="lumen-card p-12 text-center">
+    <p class="font-display text-lg text-lumen-900">Inbox zero.</p>
+    <p class="mt-1 text-sm text-ink-500">No registrations are waiting for approval right now.</p>
+  </div>
+
+  <ul *ngIf="!loading() && pending().length > 0" class="space-y-3">
+    <li *ngFor="let user of pending()" class="lumen-card overflow-hidden">
+      <div class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+        <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-lumen-100 font-display text-base font-semibold text-lumen-800">
+          {{ initials(user) }}
+        </span>
+
+        <div class="min-w-0 flex-1">
+          <p class="font-display text-lg font-semibold text-lumen-900">{{ user.firstName }} {{ user.lastName }}</p>
+          <p class="text-sm text-ink-500">{{ user.email }}</p>
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-lumen-100 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-lumen-800">
+              Requested: {{ prettyRole(user.requestedRole) }}
+            </span>
+            <span class="lumen-pill lumen-pill-pending">Pending</span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-2">
+          <button (click)="reject(user)"
+                  [disabled]="busyId() !== null"
+                  class="lumen-btn lumen-btn-ghost hover:!border-coral-400 hover:!text-coral-600">
+            Reject
+          </button>
+          <button (click)="approve(user)"
+                  [disabled]="busyId() !== null"
+                  class="lumen-btn lumen-btn-success">
+            <span *ngIf="busyId() !== user.id">Approve</span>
+            <span *ngIf="busyId() === user.id">Approving…</span>
+          </button>
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>

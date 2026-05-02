@@ -1,0 +1,96 @@
+<div class="space-y-6">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Clinical structure</p>
+      <h1 class="mt-1 font-display text-3xl font-semibold text-lumen-900">Departments</h1>
+      <p class="mt-1 max-w-xl text-sm text-ink-500">Define the specialties patients can pick from when booking. Doctors can belong to more than one.</p>
+    </div>
+    <button (click)="openCreate()" class="lumen-btn lumen-btn-primary">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      New department
+    </button>
+  </header>
+
+  <div *ngIf="error()" class="lumen-card border-l-4 border-l-coral-500 px-4 py-3 text-sm text-coral-600">{{ error() }}</div>
+
+  <div *ngIf="loading()" class="grid gap-3 sm:grid-cols-2">
+    <div class="lumen-skeleton h-24"></div>
+    <div class="lumen-skeleton h-24"></div>
+  </div>
+
+  <div *ngIf="!loading() && list().length === 0" class="lumen-card p-10 text-center">
+    <p class="font-display text-lg text-lumen-900">No departments yet.</p>
+    <p class="mt-1 text-sm text-ink-500">Add your first one to organize doctors by specialty.</p>
+  </div>
+
+  <div *ngIf="!loading() && list().length > 0" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <article *ngFor="let d of list()" class="lumen-card lumen-card-hover overflow-hidden">
+      <div class="flex items-start gap-3 p-5">
+        <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white"
+              [style.background]="d.color || '#0F4C5C'">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21l-6-6 6-6 6 6-6 6z"/>
+          </svg>
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="font-display text-base font-semibold text-lumen-900">{{ d.name }}</p>
+          <p class="mt-0.5 line-clamp-2 text-sm text-ink-500">{{ d.description || '—' }}</p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-1.5 border-t border-lumen-700/8 px-3 py-2">
+        <button (click)="openEdit(d)" class="lumen-btn lumen-btn-ghost !px-3 !py-1.5 !text-xs">Edit</button>
+        <button (click)="remove(d)" class="lumen-btn lumen-btn-ghost !px-3 !py-1.5 !text-xs hover:!border-coral-400 hover:!text-coral-600">Remove</button>
+      </div>
+    </article>
+  </div>
+
+  <!-- Modal -->
+  <div *ngIf="showForm()" class="fixed inset-0 z-40 flex items-center justify-center bg-lumen-900/40 p-4 backdrop-blur-sm">
+    <div class="lumen-card w-full max-w-lg p-6">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Department</p>
+          <h2 class="mt-1 font-display text-xl font-semibold text-lumen-900">{{ editingId() ? 'Edit department' : 'New department' }}</h2>
+        </div>
+        <button (click)="close()" class="text-ink-500 hover:text-ink-900">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="mt-5 space-y-4">
+        <div>
+          <label class="lumen-label">Name</label>
+          <input formControlName="name" type="text" class="lumen-input" />
+        </div>
+        <div>
+          <label class="lumen-label">Description</label>
+          <textarea formControlName="description" rows="3" class="lumen-input"></textarea>
+        </div>
+        <div>
+          <label class="lumen-label">Accent color</label>
+          <div class="flex flex-wrap gap-2">
+            <button *ngFor="let c of suggestedColors" type="button"
+                    (click)="form.patchValue({ color: c })"
+                    [style.background]="c"
+                    class="h-8 w-8 rounded-full border-2 transition"
+                    [class.border-lumen-900]="form.value.color === c"
+                    [class.border-transparent]="form.value.color !== c"></button>
+          </div>
+        </div>
+        <div>
+          <label class="lumen-label">Icon</label>
+          <select formControlName="icon" class="lumen-input">
+            <option *ngFor="let i of iconOptions" [value]="i.name">{{ i.label }}</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" (click)="close()" class="lumen-btn lumen-btn-ghost">Cancel</button>
+          <button type="submit" [disabled]="saving()" class="lumen-btn lumen-btn-primary">
+            {{ editingId() ? 'Save' : 'Create' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

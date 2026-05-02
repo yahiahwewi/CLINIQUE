@@ -1,52 +1,20 @@
-import { Component, signal, OnInit } from '@angular/core';
-import { RouterOutlet, Router, RouterModule } from '@angular/router';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { NotificationService, Notification } from './services/notification.service';
-import { AuthService, AuthResponse } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, RouterModule],
+  imports: [RouterOutlet, CommonModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App implements OnInit {
-  protected readonly title = signal('frontend');
+export class App {
   notifications: Notification[] = [];
-  currentUser: AuthResponse | null = null;
 
-  constructor(
-    private notificationService: NotificationService,
-    private authService: AuthService,
-    public router: Router
-  ) {
-    this.notificationService.notifications$.subscribe(notifications => {
-      this.notifications = notifications;
-    });
-  }
-
-  ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-    });
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
-
-  isAdmin(): boolean {
-    return this.authService.hasRole('ROLE_ADMIN');
-  }
-
-  hasRole(role: string): boolean {
-    return this.authService.hasRole(role);
-  }
-
-  isAuthenticated(): boolean {
-    return this.authService.isAuthenticated();
+  constructor(private notificationService: NotificationService) {
+    this.notificationService.notifications$.subscribe(list => this.notifications = list);
   }
 
   closeNotification(id: string): void {

@@ -26,6 +26,8 @@ public class UserMapper {
                 .roles(user.getRoles().stream()
                         .map(this::toRoleDTO)
                         .collect(Collectors.toSet()))
+                .approvalStatus(user.getApprovalStatus() == null ? "APPROVED" : user.getApprovalStatus().name())
+                .requestedRole(user.getRequestedRole())
                 .build();
     }
 

@@ -1,0 +1,113 @@
+<div class="space-y-6">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Schedule</p>
+      <h1 class="mt-1 font-display text-3xl font-semibold text-lumen-900">Your availability</h1>
+      <p class="mt-1 max-w-xl text-sm text-ink-500">Define recurring weekly windows. Patients only see slots that fall inside an active window.</p>
+    </div>
+    <button (click)="openAdd()" class="lumen-btn lumen-btn-primary">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Add window
+    </button>
+  </header>
+
+  <div *ngIf="error()" class="lumen-card border-l-4 border-l-coral-500 px-4 py-3 text-sm text-coral-600">
+    {{ error() }}
+  </div>
+
+  <div *ngIf="loading()" class="grid gap-3">
+    <div class="lumen-skeleton h-24 w-full"></div>
+    <div class="lumen-skeleton h-24 w-full"></div>
+  </div>
+
+  <!-- Weekly grid -->
+  <section *ngIf="!loading()" class="grid gap-4 lg:grid-cols-2">
+    <article *ngFor="let row of windowsByDay()" class="lumen-card overflow-hidden">
+      <div class="flex items-center justify-between border-b border-lumen-700/8 bg-canvas-50/40 px-5 py-3">
+        <p class="font-display text-base font-semibold text-lumen-900">{{ dayLabel(row.day) }}</p>
+        <p class="text-[11px] uppercase tracking-wider text-ink-500">
+          {{ row.items.length === 0 ? 'No windows' : (row.items.length + ' window' + (row.items.length > 1 ? 's' : '')) }}
+        </p>
+      </div>
+
+      <div *ngIf="row.items.length === 0" class="px-5 py-6 text-center text-sm text-ink-500">
+        Nothing scheduled.
+      </div>
+
+      <ul class="lumen-hairline">
+        <li *ngFor="let w of row.items" class="flex items-center gap-4 px-5 py-3"
+            [class.opacity-55]="!w.active">
+          <div class="flex w-32 items-baseline gap-1">
+            <span class="font-display text-lg font-semibold text-lumen-700">{{ fmtTime(w.startTime) }}</span>
+            <span class="text-ink-500">→</span>
+            <span class="font-display text-lg font-semibold text-lumen-700">{{ fmtTime(w.endTime) }}</span>
+          </div>
+          <div class="flex-1 text-sm">
+            <span class="text-ink-700">{{ w.slotDurationMinutes }}-min slots</span>
+            <span class="ml-2 text-ink-500">· {{ slotsCount(w) }} per window</span>
+          </div>
+          <span *ngIf="!w.active" class="lumen-pill lumen-pill-cancelled">Off</span>
+          <span *ngIf="w.active" class="lumen-pill lumen-pill-accepted">On</span>
+          <button (click)="openEdit(w)" class="lumen-btn lumen-btn-ghost px-3 py-1.5 text-xs">Edit</button>
+          <button (click)="remove(w)" class="lumen-btn lumen-btn-ghost px-3 py-1.5 text-xs hover:!border-coral-400 hover:!text-coral-600">Remove</button>
+        </li>
+      </ul>
+    </article>
+  </section>
+
+  <!-- Modal-ish form -->
+  <div *ngIf="showForm()" class="fixed inset-0 z-40 flex items-center justify-center bg-lumen-900/40 p-4 backdrop-blur-sm">
+    <div class="lumen-card w-full max-w-md p-6">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">{{ editingId() ? 'Edit window' : 'New window' }}</p>
+          <h2 class="mt-1 font-display text-xl font-semibold text-lumen-900">Recurring weekly slot</h2>
+        </div>
+        <button (click)="closeForm()" class="text-ink-500 hover:text-ink-900">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="mt-5 space-y-4">
+        <div>
+          <label class="lumen-label">Day</label>
+          <select formControlName="dayOfWeek" class="lumen-input">
+            <option *ngFor="let d of days" [value]="d">{{ dayLabel(d) }}</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="lumen-label">Start</label>
+            <input type="time" formControlName="startTime" class="lumen-input" />
+          </div>
+          <div>
+            <label class="lumen-label">End</label>
+            <input type="time" formControlName="endTime" class="lumen-input" />
+          </div>
+        </div>
+        <div>
+          <label class="lumen-label">Slot length</label>
+          <select formControlName="slotDurationMinutes" class="lumen-input">
+            <option *ngFor="let d of durations" [value]="d">{{ d }} minutes</option>
+          </select>
+        </div>
+        <label class="flex items-center gap-2 text-sm text-ink-700">
+          <input type="checkbox" formControlName="active" class="h-4 w-4 accent-lumen-700" />
+          Active (visible to patients)
+        </label>
+
+        <div *ngIf="formError()" class="rounded-lg border border-coral-500/30 bg-coral-500/8 px-3 py-2 text-sm text-coral-600">
+          {{ formError() }}
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" (click)="closeForm()" class="lumen-btn lumen-btn-ghost">Cancel</button>
+          <button type="submit" [disabled]="saving()" class="lumen-btn lumen-btn-primary">
+            <span *ngIf="!saving()">{{ editingId() ? 'Save' : 'Add window' }}</span>
+            <span *ngIf="saving()">Saving…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

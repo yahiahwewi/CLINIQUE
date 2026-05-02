@@ -5,12 +5,14 @@ import com.example.demo.dto.ForgotPasswordRequest;
 import com.example.demo.dto.LoginRequest;
 import com.example.demo.dto.ResetPasswordRequest;
 import com.example.demo.dto.RegisterRequest;
+import com.example.demo.entity.ApprovalStatus;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,12 +22,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
+
+    private static final Set<String> SELF_SIGNUP_ROLES = Set.of("USER", "DOCTOR", "NURSE");
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -51,6 +58,7 @@ public class AuthService {
         this.passwordResetExpirationMs = passwordResetExpirationMs;
     }
 
+    @Transactional
     public AuthResponse register(RegisterRequest registerRequest) {
         String normalizedEmail = normalizeEmail(registerRequest.getEmail());
         String normalizedFirstName = normalizeText(registerRequest.getFirstName());
@@ -58,43 +66,78 @@ public class AuthService {
         String password = registerRequest.getPassword();
         String confirmPassword = registerRequest.getConfirmPassword();
 
-        // Validate passwords match
         if (!password.equals(confirmPassword)) {
             throw new IllegalArgumentException("Passwords do not match");
         }
 
-        // Check if email already exists
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new IllegalArgumentException("Email already in use");
         }
 
-        // Create new user
+        String requestedRole = normalizeRequestedRole(registerRequest.getRequestedRole());
+        boolean isPatient = "USER".equals(requestedRole);
+
+        // Patients auto-approve and can sign in immediately. Clinical staff
+        // (DOCTOR / NURSE) start PENDING and must be approved by an admin.
         User user = User.builder()
                 .email(normalizedEmail)
                 .password(passwordEncoder.encode(password))
                 .firstName(normalizedFirstName)
                 .lastName(normalizedLastName)
-                .enabled(true)
+                .enabled(isPatient)
+                .approvalStatus(isPatient ? ApprovalStatus.APPROVED : ApprovalStatus.PENDING)
+                .requestedRole("ROLE_" + requestedRole)
+                .roles(new HashSet<>())
                 .build();
 
-        // Assign default USER role
+        // Always grant ROLE_USER so the principal has at least one role. For
+        // patients that's the final role; for staff the requested clinical
+        // role is added on approval.
         Role userRole = roleRepository.findByName("ROLE_USER")
                 .orElseThrow(() -> new RuntimeException("Default ROLE_USER role not found"));
         user.addRole(userRole);
 
         User savedUser = userRepository.save(user);
 
-        // Generate token
-        UserDetails userDetails = userDetailsService.loadUserByUsername(savedUser.getEmail());
-        String token = jwtUtil.generateToken(userDetails);
+        if (isPatient) {
+            return AuthResponse.builder()
+                    .token("")
+                    .id(savedUser.getId())
+                    .email(savedUser.getEmail())
+                    .firstName(savedUser.getFirstName())
+                    .lastName(savedUser.getLastName())
+                    .roles(List.of("ROLE_USER"))
+                    .approvalStatus(ApprovalStatus.APPROVED.name())
+                    .message("Welcome, " + savedUser.getFirstName() + " — your account is ready. Sign in to book your first appointment.")
+                    .build();
+        }
 
-        return buildAuthResponse(token, savedUser);
+        return AuthResponse.builder()
+                .token("")
+                .id(savedUser.getId())
+                .email(savedUser.getEmail())
+                .firstName(savedUser.getFirstName())
+                .lastName(savedUser.getLastName())
+                .roles(List.of())
+                .approvalStatus(ApprovalStatus.PENDING.name())
+                .message("Thanks " + savedUser.getFirstName() + " — your " + requestedRole.toLowerCase() + " account is pending administrator approval. You'll be able to sign in once it's approved.")
+                .build();
     }
 
     public AuthResponse login(LoginRequest loginRequest) {
         String normalizedEmail = normalizeEmail(loginRequest.getEmail());
 
-        // Authenticate user
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+
+        ApprovalStatus status = user.getApprovalStatus();
+        if (status == ApprovalStatus.PENDING) {
+            throw new AccessDeniedException("Your account is pending administrator approval.");
+        }
+        if (status == ApprovalStatus.REJECTED) {
+            throw new AccessDeniedException("Your registration was not approved. Please contact an administrator.");
+        }
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         normalizedEmail,
@@ -102,12 +145,7 @@ public class AuthService {
                 )
         );
 
-        // Get user details
         UserDetails userDetails = userDetailsService.loadUserByUsername(normalizedEmail);
-        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Generate token
         String token = jwtUtil.generateToken(userDetails);
 
         return buildAuthResponse(token, user);
@@ -146,6 +184,20 @@ public class AuthService {
         userRepository.save(user);
     }
 
+    private String normalizeRequestedRole(String requested) {
+        if (requested == null || requested.isBlank()) {
+            return "USER";
+        }
+        String upper = requested.trim().toUpperCase(Locale.ROOT);
+        if (upper.startsWith("ROLE_")) upper = upper.substring(5);
+        if ("PATIENT".equals(upper)) upper = "USER";
+        if (!SELF_SIGNUP_ROLES.contains(upper)) {
+            throw new IllegalArgumentException(
+                    "Requested role must be one of: PATIENT, DOCTOR, NURSE.");
+        }
+        return upper;
+    }
+
     private String normalizeEmail(String email) {
         return normalizeText(email).toLowerCase(Locale.ROOT);
     }
@@ -164,6 +216,11 @@ public class AuthService {
                 .roles(user.getRoles().stream()
                         .map(Role::getName)
                         .collect(Collectors.toList()))
+                .approvalStatus(
+                        user.getApprovalStatus() == null
+                                ? ApprovalStatus.APPROVED.name()
+                                : user.getApprovalStatus().name()
+                )
                 .build();
     }
 }

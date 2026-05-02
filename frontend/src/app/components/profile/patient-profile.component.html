@@ -1,0 +1,73 @@
+<div class="space-y-6">
+  <header>
+    <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Profile</p>
+    <h1 class="mt-1 font-display text-3xl font-semibold text-lumen-900">My medical profile</h1>
+    <p class="mt-1 max-w-xl text-sm text-ink-500">
+      Doctors and nurses see this when they review your appointments. Allergies and chronic conditions are especially important.
+    </p>
+  </header>
+
+  <div *ngIf="loading()" class="space-y-2">
+    <div class="lumen-skeleton h-12 w-full"></div>
+    <div class="lumen-skeleton h-32 w-full"></div>
+  </div>
+
+  <form *ngIf="!loading()" [formGroup]="form" (ngSubmit)="save()" class="lumen-card space-y-6 p-6">
+    <section class="grid gap-4 md:grid-cols-3">
+      <div>
+        <label class="lumen-label">Date of birth</label>
+        <input type="date" formControlName="dateOfBirth" class="lumen-input" />
+      </div>
+      <div>
+        <label class="lumen-label">Gender</label>
+        <select formControlName="gender" class="lumen-input">
+          <option value="">—</option>
+          <option *ngFor="let g of genders" [value]="g">{{ g }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="lumen-label">Blood type</label>
+        <select formControlName="bloodType" class="lumen-input">
+          <option value="">—</option>
+          <option *ngFor="let b of bloodTypes" [value]="b">{{ b }}</option>
+        </select>
+      </div>
+    </section>
+
+    <section>
+      <label class="lumen-label">Allergies</label>
+      <textarea formControlName="allergies" rows="2"
+                placeholder="e.g. Penicillin, peanuts"
+                class="lumen-input"></textarea>
+      <p class="mt-1 text-[11px] text-ink-500">Comma-separated. Leave blank if none.</p>
+    </section>
+
+    <section>
+      <label class="lumen-label">Chronic conditions</label>
+      <textarea formControlName="chronicConditions" rows="3"
+                placeholder="e.g. Asthma (mild), hypertension"
+                class="lumen-input"></textarea>
+    </section>
+
+    <section class="grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="lumen-label">Emergency contact name</label>
+        <input formControlName="emergencyContactName" type="text" class="lumen-input" />
+      </div>
+      <div>
+        <label class="lumen-label">Emergency contact phone</label>
+        <input formControlName="emergencyContactPhone" type="tel" class="lumen-input" />
+      </div>
+    </section>
+
+    <div *ngIf="error()" class="rounded-lg border border-coral-500/30 bg-coral-500/8 px-4 py-3 text-sm text-coral-600">{{ error() }}</div>
+    <div *ngIf="saved()" class="rounded-lg border border-sage-500/30 bg-sage-500/8 px-4 py-3 text-sm text-sage-600">Profile saved.</div>
+
+    <div class="flex justify-end">
+      <button type="submit" [disabled]="saving()" class="lumen-btn lumen-btn-primary">
+        <span *ngIf="!saving()">Save changes</span>
+        <span *ngIf="saving()">Saving…</span>
+      </button>
+    </div>
+  </form>
+</div>

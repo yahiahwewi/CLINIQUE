@@ -19,5 +19,7 @@ public class UserDTO {
     private String lastName;
     private Boolean enabled;
     private Set<RoleDTO> roles;
+    private String approvalStatus;
+    private String requestedRole;
 }
 

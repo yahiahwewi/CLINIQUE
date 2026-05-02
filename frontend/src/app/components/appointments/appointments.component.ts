@@ -12,11 +12,14 @@ import {
 import { AuthService, AuthResponse } from '../../services/auth.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { SlotPickerComponent } from './slot-picker.component';
+import { TriageWidgetComponent, TriageOutcome } from './triage-widget.component';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SlotPickerComponent, TriageWidgetComponent, RouterModule],
   templateUrl: './appointments.component.html',
   styleUrl: './appointments.component.css'
 })
@@ -60,6 +63,47 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       doctorId: [null, Validators.required],
       nurseId: [null]
     });
+  }
+
+  onSlotPicked(iso: string): void {
+    this.appointmentForm.patchValue({ appointmentDateTime: iso });
+    this.formError = '';
+  }
+
+  /**
+   * Apply an AI triage suggestion: pre-fill the chief complaint into title +
+   * description and pre-select the first doctor in the suggested department.
+   */
+  onTriageApplied(out: TriageOutcome): void {
+    if (out.draftChiefComplaint) {
+      this.appointmentForm.patchValue({
+        title: this.firstSentence(out.draftChiefComplaint, 60),
+        description: out.draftChiefComplaint
+      });
+    }
+    // Slot picker will need a real doctor; if a department was suggested, we
+    // don't auto-select a doctor (we don't yet have a department→doctor map
+    // on the patient side). The user picks from the list as before.
+    this.formError = '';
+  }
+
+  private firstSentence(s: string, max: number): string {
+    if (!s) return '';
+    const trimmed = s.split('.')[0].trim();
+    return trimmed.length > max ? trimmed.slice(0, max - 1) + '…' : trimmed;
+  }
+
+  isDoctor(): boolean {
+    return this.authService.hasRole('ROLE_DOCTOR');
+  }
+
+  selectedDoctorId(): number | null {
+    const v = this.appointmentForm?.get('doctorId')?.value;
+    return v ? Number(v) : null;
+  }
+
+  initialSlot(): string | null {
+    return this.appointmentForm?.get('appointmentDateTime')?.value || null;
   }
 
   loadData(): void {

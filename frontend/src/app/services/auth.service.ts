@@ -9,12 +9,15 @@ export interface LoginRequest {
   password: string;
 }
 
+export type RequestedRole = 'PATIENT' | 'DOCTOR' | 'NURSE';
+
 export interface RegisterRequest {
   firstName: string;
   lastName: string;
   email: string;
   password: string;
   confirmPassword: string;
+  requestedRole?: RequestedRole;
 }
 
 export interface ForgotPasswordRequest {
@@ -31,6 +34,8 @@ export interface MessageResponse {
   message: string;
 }
 
+export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
 export interface AuthResponse {
   token: string;
   type: string;
@@ -39,6 +44,8 @@ export interface AuthResponse {
   firstName: string;
   lastName: string;
   roles: string[];
+  approvalStatus?: ApprovalStatus;
+  message?: string;
 }
 
 @Injectable({
@@ -82,14 +89,18 @@ export class AuthService {
       lastName: registerRequest.lastName.trim(),
       email: registerRequest.email.trim().toLowerCase(),
       password: registerRequest.password,
-      confirmPassword: registerRequest.confirmPassword
+      confirmPassword: registerRequest.confirmPassword,
+      requestedRole: registerRequest.requestedRole ?? 'PATIENT'
     })
       .pipe(
         timeout(this.requestTimeoutMs),
         tap(response => {
-          this.saveToken(response.token);
-          this.saveUser(response);
-          this.currentUserSubject.next(response);
+          // Only sign the user in if their account is approved.
+          if (response.approvalStatus === 'APPROVED' || (!response.approvalStatus && response.token)) {
+            this.saveToken(response.token);
+            this.saveUser(response);
+            this.currentUserSubject.next(response);
+          }
         }),
         catchError(error => this.handleAuthRequestError(error))
       );

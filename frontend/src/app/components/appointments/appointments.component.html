@@ -1,203 +1,191 @@
 <div class="space-y-6">
-  <div class="flex flex-col gap-4 rounded-3xl bg-slate-900 px-8 py-8 text-white lg:flex-row lg:items-end lg:justify-between">
+  <!-- Header -->
+  <header class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <p class="text-sm uppercase tracking-[0.3em] text-sky-200">Appointment Center</p>
-      <h1 class="mt-3 text-3xl font-bold">{{ heading() }}</h1>
-      <p class="mt-2 max-w-2xl text-sm text-slate-200">{{ roleHint() }}</p>
+      <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Appointments</p>
+      <h1 class="mt-1 font-display text-3xl font-semibold text-lumen-900">{{ heading() }}</h1>
+      <p class="mt-1 max-w-xl text-sm text-ink-500">{{ roleHint() }}</p>
     </div>
-
-    <button
-      *ngIf="isUser()"
-      (click)="openCreateForm()"
-      class="inline-flex items-center justify-center rounded-2xl bg-sky-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300"
-    >
-      New Appointment
+    <button *ngIf="isUser()" (click)="openCreateForm()" class="lumen-btn lumen-btn-primary">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      New appointment
     </button>
-  </div>
+  </header>
 
-  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-    <div class="rounded-2xl bg-white p-5 shadow-sm">
-      <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Visible Now</p>
-      <p class="mt-3 text-3xl font-bold text-slate-900">{{ appointmentCount() }}</p>
-      <p class="mt-2 text-sm text-slate-500">Appointments in your current queue</p>
+  <!-- KPI strip -->
+  <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Total visible</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-lumen-900">{{ appointmentCount() }}</p>
+      <p class="mt-1 text-xs text-ink-500">In your queue</p>
     </div>
-    <div class="rounded-2xl bg-white p-5 shadow-sm">
-      <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Pending</p>
-      <p class="mt-3 text-3xl font-bold text-amber-500">{{ pendingCount() }}</p>
-      <p class="mt-2 text-sm text-slate-500">Still waiting for confirmation</p>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Pending</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-amber-600">{{ pendingCount() }}</p>
+      <p class="mt-1 text-xs text-ink-500">Awaiting decision</p>
     </div>
-    <div class="rounded-2xl bg-white p-5 shadow-sm">
-      <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Accepted</p>
-      <p class="mt-3 text-3xl font-bold text-emerald-600">{{ acceptedCount() }}</p>
-      <p class="mt-2 text-sm text-slate-500">Confirmed and ready to attend</p>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Accepted</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-sage-600">{{ acceptedCount() }}</p>
+      <p class="mt-1 text-xs text-ink-500">Confirmed</p>
     </div>
-    <div class="rounded-2xl bg-white p-5 shadow-sm">
-      <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Next Slot</p>
-      <p class="mt-3 text-lg font-bold text-slate-900">{{ nextAppointmentLabel() }}</p>
-      <p class="mt-2 text-sm text-slate-500">Nearest upcoming appointment</p>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Next slot</p>
+      <p class="mt-2 font-display text-base font-semibold text-lumen-900">{{ nextAppointmentLabel() }}</p>
+      <p class="mt-1 text-xs text-ink-500">Nearest upcoming</p>
     </div>
+  </section>
+
+  <!-- Inline messages -->
+  <div *ngIf="success" class="lumen-card border-l-4 border-l-sage-500 px-4 py-3 text-sm text-sage-600">{{ success }}</div>
+  <div *ngIf="error" class="lumen-card border-l-4 border-l-coral-500 px-4 py-3 text-sm text-coral-600">{{ error }}</div>
+
+  <!-- Loading skeleton -->
+  <div *ngIf="loading()" class="space-y-2">
+    <div class="lumen-skeleton h-24"></div>
+    <div class="lumen-skeleton h-24"></div>
+    <div class="lumen-skeleton h-24"></div>
   </div>
 
-  <div *ngIf="success" class="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-    {{ success }}
+  <!-- Empty state -->
+  <div *ngIf="!loading() && appointments.length === 0" class="lumen-card p-12 text-center">
+    <p class="font-display text-lg text-lumen-900">No appointments yet.</p>
+    <p class="mt-1 text-sm text-ink-500">Once appointments are scheduled, they'll appear here with role-aware actions.</p>
   </div>
 
-  <div *ngIf="error" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-    {{ error }}
-  </div>
+  <!-- Appointment list -->
+  <div *ngIf="!loading() && appointments.length > 0" class="space-y-3">
+    <article *ngFor="let appointment of appointments; trackBy: trackByAppointment"
+             class="lumen-card lumen-card-hover overflow-hidden">
+      <div class="flex flex-col gap-4 p-5 lg:flex-row lg:items-start">
+        <div class="flex w-full shrink-0 items-center gap-4 lg:w-48">
+          <div class="text-center">
+            <p class="font-display text-2xl font-semibold leading-none text-lumen-700">{{ formatDate(appointment.appointmentDateTime) }}</p>
+          </div>
+        </div>
 
-  <div *ngIf="loading()" class="grid gap-5">
-    <div *ngFor="let item of [1, 2, 3]" class="animate-pulse rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div class="h-6 w-48 rounded bg-slate-200"></div>
-      <div class="mt-4 h-4 w-full rounded bg-slate-100"></div>
-      <div class="mt-2 h-4 w-4/5 rounded bg-slate-100"></div>
-      <div class="mt-6 grid gap-3 md:grid-cols-4">
-        <div class="h-14 rounded-xl bg-slate-100"></div>
-        <div class="h-14 rounded-xl bg-slate-100"></div>
-        <div class="h-14 rounded-xl bg-slate-100"></div>
-        <div class="h-14 rounded-xl bg-slate-100"></div>
-      </div>
-    </div>
-  </div>
-
-  <div *ngIf="!loading() && appointments.length === 0" class="rounded-2xl bg-white p-10 text-center shadow-sm">
-    <h2 class="text-xl font-semibold text-slate-800">No appointments yet</h2>
-    <p class="mt-2 text-sm text-slate-500">Once appointments are scheduled, they will appear here with role-specific actions.</p>
-  </div>
-
-  <div *ngIf="!loading() && appointments.length > 0" class="grid gap-5">
-    <article *ngFor="let appointment of appointments; trackBy: trackByAppointment" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div class="space-y-3">
+        <div class="min-w-0 flex-1 space-y-2">
           <div class="flex flex-wrap items-center gap-3">
-            <h2 class="text-xl font-semibold text-slate-900">{{ appointment.title }}</h2>
-            <span class="rounded-full px-3 py-1 text-xs font-semibold" [ngClass]="statusClass(appointment.status)">
+            <h3 class="font-display text-lg font-semibold text-lumen-900">{{ appointment.title }}</h3>
+            <span [ngClass]="statusClass(appointment.status)" class="lumen-pill"
+                  [class.lumen-pill-pending]="appointment.status === 'PENDING'"
+                  [class.lumen-pill-accepted]="appointment.status === 'ACCEPTED'"
+                  [class.lumen-pill-cancelled]="appointment.status === 'CANCELLED'">
               {{ appointment.status }}
             </span>
           </div>
+          <p class="text-sm text-ink-700">{{ appointment.description }}</p>
 
-          <p class="text-sm leading-6 text-slate-600">{{ appointment.description }}</p>
-
-          <div class="grid gap-3 text-sm text-slate-600 md:grid-cols-2 xl:grid-cols-4">
+          <div class="grid gap-3 pt-2 text-sm sm:grid-cols-3">
             <div>
-              <p class="font-semibold text-slate-800">Patient</p>
-              <p>{{ appointment.patient.fullName }}</p>
-              <p>{{ appointment.patient.email }}</p>
+              <p class="text-[10px] uppercase tracking-wider text-ink-500">Patient</p>
+              <p class="text-ink-900">{{ appointment.patient.fullName }}</p>
             </div>
             <div>
-              <p class="font-semibold text-slate-800">Doctor</p>
-              <p>{{ appointment.doctor.fullName }}</p>
-              <p>{{ appointment.doctor.email }}</p>
+              <p class="text-[10px] uppercase tracking-wider text-ink-500">Doctor</p>
+              <p class="text-ink-900">Dr. {{ appointment.doctor.fullName }}</p>
             </div>
             <div>
-              <p class="font-semibold text-slate-800">Nurse</p>
-              <p>{{ appointment.nurse?.fullName || 'Not assigned' }}</p>
-              <p>{{ appointment.nurse?.email || 'Assign later if needed' }}</p>
-            </div>
-            <div>
-              <p class="font-semibold text-slate-800">Date & Time</p>
-              <p>{{ formatDate(appointment.appointmentDateTime) }}</p>
+              <p class="text-[10px] uppercase tracking-wider text-ink-500">Nurse</p>
+              <p class="text-ink-900">{{ appointment.nurse?.fullName || 'Unassigned' }}</p>
             </div>
           </div>
         </div>
 
-        <div class="flex flex-wrap gap-2 lg:max-w-xs lg:justify-end">
-          <button
-            *ngIf="canEditAppointment(appointment)"
-            (click)="openEditForm(appointment)"
-            class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-          >
-            Edit
-          </button>
-          <button
-            *ngIf="canManageStatus(appointment) && appointment.status !== 'ACCEPTED'"
-            (click)="updateStatus(appointment, 'ACCEPTED')"
-            class="rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
-          >
-            Accept
-          </button>
-          <button
-            *ngIf="canManageStatus(appointment) && appointment.status !== 'CANCELLED'"
-            (click)="updateStatus(appointment, 'CANCELLED')"
-            class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-amber-600"
-          >
-            Cancel
-          </button>
-          <button
-            *ngIf="canDeleteAppointment(appointment)"
-            (click)="deleteAppointment(appointment)"
-            class="rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-700"
-          >
-            Delete
-          </button>
+        <div class="flex flex-wrap gap-2 lg:flex-col lg:items-end">
+          <a *ngIf="isDoctor() && canManageStatus(appointment)"
+             [routerLink]="['/dashboard/appointments', appointment.id, 'consultation']"
+             class="lumen-btn lumen-btn-primary !px-3 !py-1.5 !text-xs">Open consultation</a>
+          <button *ngIf="canManageStatus(appointment) && appointment.status !== 'ACCEPTED'"
+                  (click)="updateStatus(appointment, 'ACCEPTED')"
+                  class="lumen-btn lumen-btn-success !px-3 !py-1.5 !text-xs">Accept</button>
+          <button *ngIf="canManageStatus(appointment) && appointment.status !== 'CANCELLED'"
+                  (click)="updateStatus(appointment, 'CANCELLED')"
+                  class="lumen-btn lumen-btn-ghost !px-3 !py-1.5 !text-xs">Cancel</button>
+          <button *ngIf="canEditAppointment(appointment)" (click)="openEditForm(appointment)"
+                  class="lumen-btn lumen-btn-ghost !px-3 !py-1.5 !text-xs">Edit</button>
+          <button *ngIf="canDeleteAppointment(appointment)" (click)="deleteAppointment(appointment)"
+                  class="lumen-btn lumen-btn-ghost !px-3 !py-1.5 !text-xs hover:!border-coral-400 hover:!text-coral-600">Delete</button>
         </div>
       </div>
     </article>
   </div>
 
-  <div *ngIf="showForm" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
-    <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl">
-      <div class="mb-6 flex items-start justify-between">
+  <!-- Booking modal -->
+  <div *ngIf="showForm" class="fixed inset-0 z-40 flex items-center justify-center bg-lumen-900/40 p-4 backdrop-blur-sm">
+    <div class="lumen-card max-h-[92vh] w-full max-w-2xl overflow-y-auto p-7">
+      <div class="flex items-start justify-between">
         <div>
-          <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Appointment Form</p>
-          <h2 class="mt-2 text-2xl font-bold text-slate-900">
-            {{ editingAppointment ? 'Edit Appointment' : 'Create Appointment' }}
+          <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">{{ editingAppointment ? 'Edit appointment' : 'Book a slot' }}</p>
+          <h2 class="mt-1 font-display text-2xl font-semibold text-lumen-900">
+            {{ editingAppointment ? 'Update your appointment' : 'New appointment' }}
           </h2>
         </div>
-        <button (click)="closeForm()" class="rounded-full bg-slate-100 px-3 py-1 text-slate-500 hover:bg-slate-200">Close</button>
+        <button (click)="closeForm()" class="text-ink-500 hover:text-ink-900" aria-label="Close">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
 
-      <form [formGroup]="appointmentForm" (ngSubmit)="saveAppointment()" class="space-y-5">
-        <div *ngIf="formError" class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+      <form [formGroup]="appointmentForm" (ngSubmit)="saveAppointment()" class="mt-5 space-y-5">
+        <lumen-triage-widget
+          *ngIf="!editingAppointment"
+          (outcome)="onTriageApplied($event)">
+        </lumen-triage-widget>
+
+        <div *ngIf="formError" class="rounded-lg border border-coral-500/30 bg-coral-500/8 px-4 py-3 text-sm text-coral-600">
           {{ formError }}
         </div>
 
-        <div *ngIf="loadingMeta" class="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
-          Loading doctors and nurses...
+        <div *ngIf="loadingMeta" class="rounded-lg border border-lumen-700/15 bg-lumen-50 px-4 py-3 text-sm text-lumen-700">
+          Loading doctors and nurses…
         </div>
 
         <div>
-          <label class="mb-2 block text-sm font-medium text-slate-700">Title</label>
-          <input formControlName="title" type="text" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-sky-500" />
-          <p *ngIf="shouldShowError('title')" class="mt-2 text-xs text-rose-600">Title is required.</p>
+          <label class="lumen-label">Title</label>
+          <input formControlName="title" type="text" class="lumen-input" placeholder="e.g. Annual checkup" />
+          <p *ngIf="shouldShowError('title')" class="mt-1.5 text-xs text-coral-600">Title is required.</p>
         </div>
 
         <div>
-          <label class="mb-2 block text-sm font-medium text-slate-700">Description</label>
-          <textarea formControlName="description" rows="4" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-sky-500"></textarea>
-          <p *ngIf="shouldShowError('description')" class="mt-2 text-xs text-rose-600">Description is required.</p>
+          <label class="lumen-label">Description</label>
+          <textarea formControlName="description" rows="3" class="lumen-input"
+                    placeholder="Briefly describe the reason for this visit"></textarea>
+          <p *ngIf="shouldShowError('description')" class="mt-1.5 text-xs text-coral-600">Description is required.</p>
         </div>
 
-        <div class="grid gap-5 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2">
           <div>
-            <label class="mb-2 block text-sm font-medium text-slate-700">Appointment Date & Time</label>
-            <input formControlName="appointmentDateTime" [min]="minDateTime()" type="datetime-local" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-sky-500" />
-            <p *ngIf="shouldShowError('appointmentDateTime')" class="mt-2 text-xs text-rose-600">Please choose a future appointment time.</p>
-          </div>
-          <div>
-            <label class="mb-2 block text-sm font-medium text-slate-700">Doctor</label>
-            <select formControlName="doctorId" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-sky-500">
-              <option [ngValue]="null">Select a doctor</option>
-              <option *ngFor="let doctor of meta.doctors" [ngValue]="doctor.id">{{ doctor.fullName }} ({{ doctor.email }})</option>
+            <label class="lumen-label">Doctor</label>
+            <select formControlName="doctorId" class="lumen-input">
+              <option [ngValue]="null">Select a doctor…</option>
+              <option *ngFor="let doctor of meta.doctors" [ngValue]="doctor.id">{{ doctor.fullName }}</option>
             </select>
-            <p *ngIf="shouldShowError('doctorId')" class="mt-2 text-xs text-rose-600">Please select a doctor.</p>
+            <p *ngIf="shouldShowError('doctorId')" class="mt-1.5 text-xs text-coral-600">Please select a doctor.</p>
+          </div>
+          <div>
+            <label class="lumen-label">Nurse <span class="text-ink-500">(optional)</span></label>
+            <select formControlName="nurseId" class="lumen-input">
+              <option [ngValue]="null">No nurse assigned</option>
+              <option *ngFor="let nurse of meta.nurses" [ngValue]="nurse.id">{{ nurse.fullName }}</option>
+            </select>
           </div>
         </div>
 
-        <div>
-          <label class="mb-2 block text-sm font-medium text-slate-700">Assigned Nurse</label>
-          <select formControlName="nurseId" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-sky-500">
-            <option [ngValue]="null">No nurse assigned</option>
-            <option *ngFor="let nurse of meta.nurses" [ngValue]="nurse.id">{{ nurse.fullName }} ({{ nurse.email }})</option>
-          </select>
+        <div class="rounded-xl border border-lumen-700/10 bg-canvas-50 p-4">
+          <p class="lumen-label">Pick an open slot</p>
+          <lumen-slot-picker
+            [doctorId]="selectedDoctorId()"
+            [initialSlot]="initialSlot()"
+            (slotSelected)="onSlotPicked($event)">
+          </lumen-slot-picker>
+          <p *ngIf="shouldShowError('appointmentDateTime')" class="mt-2 text-xs text-coral-600">Pick an available slot.</p>
         </div>
 
-        <div class="flex gap-3 pt-2">
-          <button type="submit" [disabled]="saving" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60">
-            {{ saving ? 'Saving...' : (editingAppointment ? 'Update Appointment' : 'Create Appointment') }}
-          </button>
-          <button type="button" (click)="closeForm()" class="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-            Cancel
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" (click)="closeForm()" class="lumen-btn lumen-btn-ghost">Cancel</button>
+          <button type="submit" [disabled]="saving" class="lumen-btn lumen-btn-primary">
+            <span *ngIf="!saving">{{ editingAppointment ? 'Save changes' : 'Confirm booking' }}</span>
+            <span *ngIf="saving">Saving…</span>
           </button>
         </div>
       </form>

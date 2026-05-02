@@ -1,3 +1,215 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import "tailwindcss";
+
+/* ===================================================================
+ * Lumen Health — Design Tokens
+ * =================================================================== */
+@theme {
+  /* Brand palette — Clinical Calm */
+  --color-lumen-50:  #f0f7f7;
+  --color-lumen-100: #d9ebec;
+  --color-lumen-200: #b3d6d8;
+  --color-lumen-300: #7fb6ba;
+  --color-lumen-400: #4a8e94;
+  --color-lumen-500: #266b73;
+  --color-lumen-600: #155860;
+  --color-lumen-700: #0f4c5c;   /* primary */
+  --color-lumen-800: #0a3a47;
+  --color-lumen-900: #062a35;
+
+  --color-canvas-50:  #faf7f1;
+  --color-canvas-100: #f4efe6;   /* page bg */
+  --color-canvas-200: #ebe3d2;
+  --color-canvas-300: #d8ccb4;
+
+  --color-coral-400: #ec8c8c;
+  --color-coral-500: #e36f6f;
+  --color-coral-600: #c85555;
+
+  --color-sage-400: #98c19c;
+  --color-sage-500: #7bae7f;
+  --color-sage-600: #5e8e62;
+
+  --color-sand-100: #f6f1e7;
+  --color-sand-200: #ece4d1;
+
+  --color-ink-500: #6b6660;
+  --color-ink-700: #3a3631;
+  --color-ink-900: #1c1a17;
+
+  /* Type pairing */
+  --font-display: 'Fraunces', ui-serif, Georgia, serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Radii — slightly tighter than the default Tailwind 2xl */
+  --radius-card: 12px;
+  --radius-pill: 999px;
+}
+
+/* Base */
+html, body {
+  background: var(--color-canvas-100);
+  color: var(--color-ink-700);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "ss01", "ss02";
+  letter-spacing: -0.01em;
+}
+
+/* Scrollbar refinement */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--color-canvas-300); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-lumen-300); }
+
+/* Focus ring — softer, brand colored */
+:focus-visible {
+  outline: 2px solid var(--color-lumen-400);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ===================================================================
+ * Component utility classes
+ * =================================================================== */
+.lumen-card {
+  background: #ffffff;
+  border: 1px solid rgba(15, 76, 92, 0.06);
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 2px rgba(15, 76, 92, 0.04), 0 8px 24px -16px rgba(15, 76, 92, 0.12);
+}
+.lumen-card-hover {
+  transition: border-color 160ms, box-shadow 160ms, transform 160ms;
+}
+.lumen-card-hover:hover {
+  border-color: rgba(15, 76, 92, 0.18);
+  box-shadow: 0 1px 2px rgba(15, 76, 92, 0.06), 0 14px 30px -18px rgba(15, 76, 92, 0.18);
+}
+
+.lumen-input {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid rgba(15, 76, 92, 0.14);
+  border-radius: 10px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.9375rem;
+  color: var(--color-ink-900);
+  transition: border-color 140ms, box-shadow 140ms;
+}
+.lumen-input:focus {
+  outline: none;
+  border-color: var(--color-lumen-500);
+  box-shadow: 0 0 0 4px rgba(38, 107, 115, 0.12);
+}
+.lumen-input.is-invalid {
+  border-color: var(--color-coral-500);
+  box-shadow: 0 0 0 4px rgba(227, 111, 111, 0.12);
+}
+
+.lumen-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-ink-700);
+  margin-bottom: 0.375rem;
+  letter-spacing: 0.01em;
+}
+
+.lumen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: background 140ms, color 140ms, border-color 140ms, transform 80ms;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lumen-btn:active { transform: translateY(1px); }
+.lumen-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.lumen-btn-primary {
+  background: var(--color-lumen-700);
+  color: #ffffff;
+}
+.lumen-btn-primary:hover:not(:disabled) { background: var(--color-lumen-800); }
+
+.lumen-btn-ghost {
+  background: transparent;
+  color: var(--color-lumen-700);
+  border-color: rgba(15, 76, 92, 0.18);
+}
+.lumen-btn-ghost:hover:not(:disabled) { background: rgba(15, 76, 92, 0.06); }
+
+.lumen-btn-danger {
+  background: var(--color-coral-500);
+  color: #ffffff;
+}
+.lumen-btn-danger:hover:not(:disabled) { background: var(--color-coral-600); }
+
+.lumen-btn-success {
+  background: var(--color-sage-500);
+  color: #ffffff;
+}
+.lumen-btn-success:hover:not(:disabled) { background: var(--color-sage-600); }
+
+/* Status pill — used across appointment lists */
+.lumen-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.lumen-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.lumen-pill-pending  { background: rgba(255, 184, 76, 0.12); color: #b45309; }
+.lumen-pill-accepted { background: rgba(123, 174, 127, 0.14); color: #3f6b43; }
+.lumen-pill-cancelled{ background: rgba(227, 111, 111, 0.12); color: #a83b3b; }
+
+/* Skeleton shimmer */
+@keyframes lumen-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.lumen-skeleton {
+  background: linear-gradient(90deg,
+      rgba(15, 76, 92, 0.04) 0%,
+      rgba(15, 76, 92, 0.10) 50%,
+      rgba(15, 76, 92, 0.04) 100%);
+  background-size: 800px 100%;
+  animation: lumen-shimmer 1.4s infinite linear;
+  border-radius: 8px;
+}
+
+/* Toast slide-in (kept for the existing notification service) */
+.animate-slide-in {
+  animation: lumen-slide-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes lumen-slide-in {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+/* Hairline — used in tables instead of zebra stripes */
+.lumen-hairline > * + * {
+  border-top: 1px solid rgba(15, 76, 92, 0.08);
+}

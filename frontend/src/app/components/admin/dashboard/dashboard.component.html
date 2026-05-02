@@ -1,89 +1,92 @@
-<div class="space-y-6">
-  <div class="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-teal-900 px-8 py-8 text-white shadow-[0_30px_80px_-30px_rgba(15,118,110,0.8)]">
-    <div class="absolute right-0 top-0 h-40 w-40 translate-x-10 -translate-y-10 rounded-full bg-teal-300/15 blur-3xl"></div>
-    <div class="relative">
-      <p class="text-sm uppercase tracking-[0.25em] text-sky-200">Admin Overview</p>
-      <h1 class="mt-3 text-3xl font-bold">Hospital Control Panel</h1>
-      <p class="mt-2 max-w-2xl text-sm text-slate-200">Track account health and appointment flow from one dashboard.</p>
-      <div class="mt-6 flex flex-wrap gap-3">
-        <a routerLink="/dashboard/admin/users" class="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
-          Manage Accounts
-        </a>
-        <a routerLink="/dashboard/appointments" class="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15">
-          Review Appointments
-        </a>
-      </div>
-    </div>
-  </div>
+<div *ngIf="error" class="lumen-card mb-6 border-l-4 border-l-coral-500 px-4 py-3 text-sm text-coral-600">
+  {{ error }}
+</div>
 
-  <div *ngIf="error" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-    {{ error }}
+<div *ngIf="loading" class="space-y-4">
+  <div class="lumen-skeleton h-24 w-full"></div>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="lumen-skeleton h-28"></div>
+    <div class="lumen-skeleton h-28"></div>
+    <div class="lumen-skeleton h-28"></div>
+    <div class="lumen-skeleton h-28"></div>
   </div>
+</div>
 
-  <div *ngIf="loading" class="rounded-2xl bg-white p-8 text-center text-slate-500 shadow-sm">
-    Loading statistics...
-  </div>
+<div *ngIf="!loading && stats" class="space-y-8">
+  <header>
+    <p class="text-[11px] uppercase tracking-[0.18em] text-ink-500">Admin overview</p>
+    <h1 class="mt-1 font-display text-3xl font-semibold text-lumen-900">Hospital control</h1>
+    <p class="mt-2 max-w-2xl text-sm text-ink-500">Account health and appointment flow at a glance.</p>
+  </header>
 
-  <div *ngIf="!loading && stats" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-    <div class="rounded-2xl bg-white p-6 shadow-sm">
-      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Users</p>
-      <p class="mt-3 text-4xl font-bold text-slate-900">{{ stats.totalUsers }}</p>
-      <p class="mt-2 text-sm text-slate-500">Total accounts in the system</p>
+  <!-- KPI tiles -->
+  <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Total users</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-lumen-900">{{ stats.totalUsers }}</p>
+      <p class="mt-1 text-xs text-ink-500">All accounts in the system</p>
     </div>
-    <div class="rounded-2xl bg-white p-6 shadow-sm">
-      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Active</p>
-      <p class="mt-3 text-4xl font-bold text-emerald-600">{{ stats.activeUsers }}</p>
-      <p class="mt-2 text-sm text-slate-500">Enabled accounts ready to log in</p>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Active</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-sage-600">{{ stats.activeUsers }}</p>
+      <p class="mt-1 text-xs text-ink-500">Enabled and able to log in</p>
     </div>
-    <div class="rounded-2xl bg-white p-6 shadow-sm">
-      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Inactive</p>
-      <p class="mt-3 text-4xl font-bold text-rose-600">{{ stats.inactiveUsers }}</p>
-      <p class="mt-2 text-sm text-slate-500">Accounts currently disabled</p>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Disabled</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-coral-600">{{ stats.inactiveUsers }}</p>
+      <p class="mt-1 text-xs text-ink-500">Locked accounts</p>
     </div>
-    <div class="rounded-2xl bg-white p-6 shadow-sm">
-      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Appointments</p>
-      <p class="mt-3 text-4xl font-bold text-slate-900">{{ stats.totalAppointments }}</p>
-      <p class="mt-2 text-sm text-slate-500">All appointments on record</p>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Appointments</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-lumen-900">{{ stats.totalAppointments }}</p>
+      <p class="mt-1 text-xs text-ink-500">All time</p>
     </div>
-    <div class="rounded-2xl bg-white p-6 shadow-sm">
-      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Pending</p>
-      <p class="mt-3 text-4xl font-bold text-amber-500">{{ stats.pendingAppointments }}</p>
-      <p class="mt-2 text-sm text-slate-500">Awaiting doctor action</p>
-    </div>
-    <div class="rounded-2xl bg-white p-6 shadow-sm">
-      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Accepted</p>
-      <p class="mt-3 text-4xl font-bold text-sky-600">{{ stats.acceptedAppointments }}</p>
-      <p class="mt-2 text-sm text-slate-500">Confirmed appointments</p>
-    </div>
-  </div>
+  </section>
 
-  <div *ngIf="!loading && stats" class="grid gap-5 lg:grid-cols-2">
-    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Operations Health</p>
-      <h2 class="mt-3 text-xl font-semibold text-slate-900">What needs attention</h2>
-      <ul class="mt-4 space-y-3 text-sm text-slate-600">
-        <li class="rounded-xl bg-slate-50 px-4 py-3">
-          Pending appointments:
-          <span class="font-semibold text-slate-900">{{ stats.pendingAppointments }}</span>
-        </li>
-        <li class="rounded-xl bg-slate-50 px-4 py-3">
-          Disabled accounts:
-          <span class="font-semibold text-slate-900">{{ stats.inactiveUsers }}</span>
-        </li>
-      </ul>
+  <!-- Status row -->
+  <section class="grid gap-4 sm:grid-cols-3">
+    <a routerLink="/dashboard/admin/approvals"
+       class="lumen-card lumen-card-hover block p-5"
+       [class.ring-2]="stats.pendingApprovals > 0"
+       [class.ring-amber-300]="stats.pendingApprovals > 0">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Pending approvals</p>
+      <p class="mt-2 font-display text-4xl font-semibold"
+         [class.text-amber-600]="stats.pendingApprovals > 0"
+         [class.text-lumen-900]="stats.pendingApprovals === 0">
+        {{ stats.pendingApprovals }}
+      </p>
+      <p class="mt-1 text-sm text-ink-500">
+        {{ stats.pendingApprovals > 0 ? 'Tap to review new sign-ups' : 'No new sign-ups' }}
+      </p>
+    </a>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Pending appointments</p>
+      <p class="mt-2 font-display text-4xl font-semibold text-amber-600">{{ stats.pendingAppointments }}</p>
+      <p class="mt-1 text-sm text-ink-500">Awaiting a doctor's decision</p>
     </div>
+    <div class="lumen-card p-5">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Confirmed appointments</p>
+      <p class="mt-2 font-display text-4xl font-semibold text-sage-600">{{ stats.acceptedAppointments }}</p>
+      <p class="mt-1 text-sm text-ink-500">Accepted appointments</p>
+    </div>
+  </section>
 
-    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Suggested Actions</p>
-      <h2 class="mt-3 text-xl font-semibold text-slate-900">Fast paths</h2>
-      <div class="mt-4 grid gap-3">
-        <a routerLink="/dashboard/admin/users" class="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-          Open account management
-        </a>
-        <a routerLink="/dashboard/appointments" class="rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-          Open appointment workspace
-        </a>
-      </div>
-    </div>
-  </div>
+  <!-- Quick actions -->
+  <section class="grid gap-4 md:grid-cols-3">
+    <a routerLink="/dashboard/admin/users" class="lumen-card lumen-card-hover block p-6">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Accounts</p>
+      <h3 class="mt-3 font-display text-lg font-semibold text-lumen-900">Manage users</h3>
+      <p class="mt-1 text-sm text-ink-500">Provision and govern doctor, nurse, admin, and patient accounts.</p>
+    </a>
+    <a routerLink="/dashboard/appointments" class="lumen-card lumen-card-hover block p-6">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Operations</p>
+      <h3 class="mt-3 font-display text-lg font-semibold text-lumen-900">All appointments</h3>
+      <p class="mt-1 text-sm text-ink-500">Edit, reassign, or cancel any appointment.</p>
+    </a>
+    <a routerLink="/dashboard/admin/audit" class="lumen-card lumen-card-hover block p-6">
+      <p class="text-[11px] uppercase tracking-wider text-ink-500">Compliance</p>
+      <h3 class="mt-3 font-display text-lg font-semibold text-lumen-900">Audit log</h3>
+      <p class="mt-1 text-sm text-ink-500">Every state change, with timestamp and actor.</p>
+    </a>
+  </section>
 </div>

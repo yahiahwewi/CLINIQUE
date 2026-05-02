@@ -9,6 +9,8 @@ export interface Role {
   description?: string;
 }
 
+export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
 export interface User {
   id: number;
   email: string;
@@ -16,6 +18,8 @@ export interface User {
   lastName: string;
   enabled: boolean;
   roles: Role[];
+  approvalStatus?: ApprovalStatus;
+  requestedRole?: string;
 }
 
 export interface UserCreateRequest {
@@ -31,6 +35,7 @@ export interface UserStatistics {
   totalUsers: number;
   activeUsers: number;
   inactiveUsers: number;
+  pendingApprovals: number;
   totalAppointments: number;
   pendingAppointments: number;
   acceptedAppointments: number;
@@ -124,6 +129,22 @@ export class DataService {
 
   adminDeleteUser(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/admin/users/${id}`).pipe(
+      tap(() => this.invalidateAdminCaches())
+    );
+  }
+
+  adminGetPendingApprovals(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/admin/pending`);
+  }
+
+  adminApproveUser(id: number): Observable<User> {
+    return this.http.post<User>(`${this.apiUrl}/admin/users/${id}/approve`, {}).pipe(
+      tap(() => this.invalidateAdminCaches())
+    );
+  }
+
+  adminRejectUser(id: number): Observable<User> {
+    return this.http.post<User>(`${this.apiUrl}/admin/users/${id}/reject`, {}).pipe(
       tap(() => this.invalidateAdminCaches())
     );
   }

@@ -1,5 +1,6 @@
 package com.example.demo.repository;
 
+import com.example.demo.entity.ApprovalStatus;
 import com.example.demo.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
     boolean existsByEmailIgnoreCase(String email);
     long countByEnabled(boolean enabled);
+    long countByApprovalStatus(ApprovalStatus status);
+
+    List<User> findByApprovalStatusOrderByIdDesc(ApprovalStatus status);
 
     @Query("""
             select distinct u

@@ -61,5 +61,20 @@ public class AdminController {
         userService.deleteUser(id);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/pending")
+    public ResponseEntity<List<UserDTO>> getPendingApprovals() {
+        return ResponseEntity.ok(userService.getPendingApprovals());
+    }
+
+    @PostMapping("/users/{id}/approve")
+    public ResponseEntity<UserDTO> approveUser(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.approveUser(id));
+    }
+
+    @PostMapping("/users/{id}/reject")
+    public ResponseEntity<UserDTO> rejectUser(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.rejectUser(id));
+    }
 }
 

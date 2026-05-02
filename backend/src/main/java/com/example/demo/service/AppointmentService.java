@@ -26,10 +26,22 @@ public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final UserRepository userRepository;
+    private final DoctorAvailabilityService availabilityService;
+    private final AuditService auditService;
+    private final NotificationService notificationService;
 
-    public AppointmentService(AppointmentRepository appointmentRepository, UserRepository userRepository) {
+    public AppointmentService(
+            AppointmentRepository appointmentRepository,
+            UserRepository userRepository,
+            DoctorAvailabilityService availabilityService,
+            AuditService auditService,
+            NotificationService notificationService
+    ) {
         this.appointmentRepository = appointmentRepository;
         this.userRepository = userRepository;
+        this.availabilityService = availabilityService;
+        this.auditService = auditService;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -67,17 +79,48 @@ public class AppointmentService {
         User currentUser = getCurrentUser();
         ensureUserCanCreateAppointments(currentUser);
 
+        User doctor = getUserWithRole(request.getDoctorId(), "ROLE_DOCTOR");
+        validateSlot(doctor.getId(), request.getAppointmentDateTime(), null);
+
         Appointment appointment = Appointment.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .appointmentDateTime(request.getAppointmentDateTime())
                 .status(AppointmentStatus.PENDING)
                 .patient(currentUser)
-                .doctor(getUserWithRole(request.getDoctorId(), "ROLE_DOCTOR"))
+                .doctor(doctor)
                 .nurse(request.getNurseId() == null ? null : getUserWithRole(request.getNurseId(), "ROLE_NURSE"))
                 .build();
 
-        return toDTO(appointmentRepository.save(appointment));
+        Appointment saved = appointmentRepository.save(appointment);
+
+        auditService.record(
+                "APPOINTMENT_CREATED",
+                "Appointment",
+                saved.getId(),
+                String.format("%s booked '%s' with Dr. %s on %s",
+                        currentUser.getFirstName(), saved.getTitle(),
+                        doctor.getLastName(), saved.getAppointmentDateTime())
+        );
+
+        notificationService.notify(
+                doctor,
+                "New appointment request",
+                String.format("%s %s booked '%s' on %s",
+                        currentUser.getFirstName(), currentUser.getLastName(),
+                        saved.getTitle(), formatWhen(saved.getAppointmentDateTime())),
+                "/dashboard/appointments"
+        );
+        if (saved.getNurse() != null) {
+            notificationService.notify(
+                    saved.getNurse(),
+                    "You've been assigned to an appointment",
+                    String.format("'%s' on %s", saved.getTitle(), formatWhen(saved.getAppointmentDateTime())),
+                    "/dashboard/appointments"
+            );
+        }
+
+        return toDTO(saved);
     }
 
     @Transactional
@@ -89,13 +132,29 @@ public class AppointmentService {
             throw new AccessDeniedException("You are not allowed to edit this appointment");
         }
 
+        User doctor = getUserWithRole(request.getDoctorId(), "ROLE_DOCTOR");
+        boolean slotChanged = !appointment.getAppointmentDateTime().equals(request.getAppointmentDateTime())
+                || !appointment.getDoctor().getId().equals(doctor.getId());
+        if (slotChanged) {
+            validateSlot(doctor.getId(), request.getAppointmentDateTime(), appointment.getId());
+        }
+
         appointment.setTitle(request.getTitle());
         appointment.setDescription(request.getDescription());
         appointment.setAppointmentDateTime(request.getAppointmentDateTime());
-        appointment.setDoctor(getUserWithRole(request.getDoctorId(), "ROLE_DOCTOR"));
+        appointment.setDoctor(doctor);
         appointment.setNurse(request.getNurseId() == null ? null : getUserWithRole(request.getNurseId(), "ROLE_NURSE"));
 
-        return toDTO(appointmentRepository.save(appointment));
+        Appointment saved = appointmentRepository.save(appointment);
+
+        auditService.record(
+                "APPOINTMENT_UPDATED",
+                "Appointment",
+                saved.getId(),
+                String.format("'%s' updated by %s", saved.getTitle(), currentUser.getEmail())
+        );
+
+        return toDTO(saved);
     }
 
     @Transactional
@@ -107,8 +166,28 @@ public class AppointmentService {
             throw new AccessDeniedException("You are not allowed to change this appointment status");
         }
 
+        AppointmentStatus previous = appointment.getStatus();
         appointment.setStatus(status);
-        return toDTO(appointmentRepository.save(appointment));
+        Appointment saved = appointmentRepository.save(appointment);
+
+        auditService.record(
+                "APPOINTMENT_STATUS_CHANGED",
+                "Appointment",
+                saved.getId(),
+                String.format("'%s' %s -> %s by %s",
+                        saved.getTitle(), previous, status, currentUser.getEmail())
+        );
+
+        notificationService.notify(
+                saved.getPatient(),
+                "Appointment " + status.name().toLowerCase(),
+                String.format("Your appointment '%s' on %s was %s by Dr. %s",
+                        saved.getTitle(), formatWhen(saved.getAppointmentDateTime()),
+                        status.name().toLowerCase(), saved.getDoctor().getLastName()),
+                "/dashboard/appointments"
+        );
+
+        return toDTO(saved);
     }
 
     @Transactional
@@ -120,7 +199,36 @@ public class AppointmentService {
             throw new AccessDeniedException("You are not allowed to delete this appointment");
         }
 
+        Long id = appointment.getId();
+        String title = appointment.getTitle();
+        User patient = appointment.getPatient();
+        User doctor = appointment.getDoctor();
+
         appointmentRepository.delete(appointment);
+
+        auditService.record(
+                "APPOINTMENT_DELETED",
+                "Appointment",
+                id,
+                String.format("'%s' deleted by %s", title, currentUser.getEmail())
+        );
+
+        if (!currentUser.getId().equals(patient.getId())) {
+            notificationService.notify(
+                    patient,
+                    "Appointment cancelled",
+                    "Your appointment '" + title + "' was cancelled.",
+                    "/dashboard/appointments"
+            );
+        }
+        if (!currentUser.getId().equals(doctor.getId())) {
+            notificationService.notify(
+                    doctor,
+                    "Appointment cancelled",
+                    "Appointment '" + title + "' was cancelled.",
+                    "/dashboard/appointments"
+            );
+        }
     }
 
     @Transactional(readOnly = true)
@@ -136,6 +244,20 @@ public class AppointmentService {
     @Transactional(readOnly = true)
     public long countAcceptedAppointments() {
         return appointmentRepository.countByStatus(AppointmentStatus.ACCEPTED);
+    }
+
+    private void validateSlot(Long doctorId, java.time.LocalDateTime start, Long excludeAppointmentId) {
+        if (!availabilityService.isValidSlot(doctorId, start)) {
+            throw new IllegalArgumentException(
+                    "The chosen time is not an available slot for this doctor. Please pick from the proposed slots.");
+        }
+        if (availabilityService.isSlotTaken(doctorId, start, excludeAppointmentId)) {
+            throw new IllegalArgumentException("That slot was just taken. Please pick another.");
+        }
+    }
+
+    private String formatWhen(java.time.LocalDateTime when) {
+        return when.toString().replace('T', ' ');
     }
 
     private void ensureUserCanCreateAppointments(User user) {

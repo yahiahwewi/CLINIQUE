@@ -30,5 +30,12 @@ public class RegisterRequest {
 
     @NotBlank(message = "Confirm password is required")
     private String confirmPassword;
+
+    /**
+     * One of: USER (patient — default), DOCTOR, NURSE.
+     * ADMIN is never accepted at registration; admins are provisioned by
+     * an existing administrator.
+     */
+    private String requestedRole;
 }
 
