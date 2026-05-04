@@ -3,5 +3,9 @@
 .DS_Store
 Thumbs.db
 .idea/
+.claude/
+.cursor/
+.vscode/
 backend/backend-run.log
 frontend/frontend-run.log
+lab-ai/flask-run.log
