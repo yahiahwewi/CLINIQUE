@@ -22,6 +22,7 @@ export const routes: Routes = [
       { path: 'profile/doctor',  loadComponent: () => import('./components/profile/doctor-profile.component').then(m => m.DoctorProfileComponent) },
       { path: 'history', loadComponent: () => import('./components/clinical/patient-history/patient-history.component').then(m => m.PatientHistoryComponent) },
       { path: 'referrals', loadComponent: () => import('./components/clinical/referrals/referrals.component').then(m => m.ReferralsComponent) },
+      { path: 'lab-analyzer', loadComponent: () => import('./components/clinical/lab-analyzer/lab-analyzer.component').then(m => m.LabAnalyzerComponent) },
       { path: 'appointments/:appointmentId/consultation', loadComponent: () => import('./components/clinical/consultation/consultation.component').then(m => m.ConsultationComponent) },
       { path: 'admin/dashboard', canActivate: [AdminGuard], loadComponent: () => import('./components/admin/dashboard/dashboard.component').then(m => m.AdminDashboardComponent) },
       { path: 'admin/users', canActivate: [AdminGuard], loadComponent: () => import('./components/admin/user-management/user-management.component').then(m => m.UserManagementComponent) },

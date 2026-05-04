@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lumen Health · Lab Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --teal: #0F4C5C;  --teal-2: #266B73; --teal-light: #f0f7f7;
+      --sand: #F4EFE6;  --sand-2: #ece4d1;
+      --ink: #3A3631;   --ink-2: #6B6660;
+      --coral: #E36F6F; --coral-bg: rgba(227,111,111,0.10);
+      --sage: #7BAE7F;  --sage-bg: rgba(123,174,127,0.14);
+      --amber: #b45309; --amber-bg: rgba(255,184,76,0.12);
+    }
+    *,*::before,*::after { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--sand); color: var(--ink);
+      font-family: 'Inter', system-ui, sans-serif; line-height: 1.45;
+    }
+    h1, h2, h3 { font-family: 'Fraunces', serif; color: var(--teal); margin: 0; }
+    h1 { font-size: 1.65rem; font-weight: 600; }
+    h2 { font-size: 1.15rem; font-weight: 600; color: var(--teal); }
+    h3 { font-size: 0.95rem; font-weight: 600; color: var(--ink); }
+    code, .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.85em; }
+    .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+    .header { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+    .brand-mark {
+      width: 40px; height: 40px; background: var(--teal); border-radius: 10px;
+      display: inline-flex; align-items: center; justify-content: center; color: var(--sand);
+    }
+    .tagline { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.18em; color: var(--ink-2); }
+    .card {
+      background: #fff; border: 1px solid rgba(15,76,92,0.08);
+      border-radius: 12px; padding: 24px;
+      box-shadow: 0 1px 2px rgba(15,76,92,0.04), 0 8px 24px -16px rgba(15,76,92,0.12);
+      margin-bottom: 16px;
+    }
+    .dropzone {
+      border: 2px dashed rgba(15,76,92,0.25); border-radius: 12px;
+      padding: 40px 24px; text-align: center; transition: border-color 160ms, background 160ms;
+      cursor: pointer; background: var(--teal-light);
+    }
+    .dropzone.dragover { border-color: var(--teal); background: #e0eded; }
+    .dropzone input { display: none; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
+      border-radius: 10px; font-size: 0.875rem; font-weight: 600; border: 1px solid transparent;
+      cursor: pointer; font-family: inherit; transition: background 140ms;
+    }
+    .btn-primary { background: var(--teal); color: #fff; }
+    .btn-primary:hover { background: #0a3a47; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: var(--teal); border-color: rgba(15,76,92,0.18); }
+    .btn-ghost:hover { background: rgba(15,76,92,0.06); }
+    .meta { color: var(--ink-2); font-size: 0.875rem; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
+      border-radius: 999px; font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.02em; text-transform: uppercase;
+    }
+    .pill::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+    .pill-low { background: var(--coral-bg); color: var(--coral); }
+    .pill-high { background: var(--coral-bg); color: var(--coral); }
+    .pill-normal { background: var(--sage-bg); color: var(--sage); }
+    .pill-amber { background: var(--amber-bg); color: var(--amber); }
+    .pill-routine { background: var(--sage-bg); color: var(--sage); }
+    .pill-prompt { background: var(--amber-bg); color: var(--amber); }
+    .pill-urgent { background: var(--coral-bg); color: var(--coral); }
+    .grid-samples { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin-top: 12px; }
+    .sample-pill {
+      padding: 10px 14px; border: 1px solid rgba(15,76,92,0.12);
+      border-radius: 8px; background: #fff; cursor: pointer;
+      font-size: 0.8125rem; text-align: left; font-family: inherit; color: var(--ink);
+      transition: border-color 140ms, background 140ms;
+    }
+    .sample-pill:hover { border-color: var(--teal); background: var(--teal-light); }
+    .sample-pill .name { font-weight: 600; color: var(--teal); display: block; margin-bottom: 2px; }
+    .findings-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .findings-table th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); padding: 8px 10px; border-bottom: 1px solid rgba(15,76,92,0.08); }
+    .findings-table td { padding: 10px; border-bottom: 1px solid rgba(15,76,92,0.06); font-size: 0.9rem; }
+    .raw-text { background: var(--sand); border: 1px solid rgba(15,76,92,0.08); border-radius: 8px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; white-space: pre-wrap; max-height: 220px; overflow-y: auto; }
+    .ai-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.16em; color: var(--teal); font-weight: 600; }
+    .ai-tag::before { content: "✦"; }
+    .disclaimer { font-size: 0.75rem; color: var(--ink-2); font-style: italic; margin-top: 8px; }
+    .summary-block { background: var(--teal-light); border-left: 4px solid var(--teal); border-radius: 8px; padding: 14px 16px; margin-top: 12px; }
+    .footer { text-align: center; font-size: 0.7rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.18em; margin-top: 32px; padding: 16px; }
+    .skeleton { background: linear-gradient(90deg, rgba(15,76,92,0.04), rgba(15,76,92,0.10), rgba(15,76,92,0.04)); background-size: 800px 100%; animation: shimmer 1.4s infinite linear; height: 40px; border-radius: 6px; }
+    @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+    .err { background: var(--coral-bg); border-left: 4px solid var(--coral); border-radius: 8px; padding: 12px 14px; color: var(--coral); margin-top: 12px; }
+    .prob-row { display: flex; align-items: center; gap: 10px; margin: 4px 0; font-size: 0.85rem; }
+    .prob-row .label { width: 200px; color: var(--ink); font-weight: 500; }
+    .prob-bar { flex: 1; height: 6px; background: rgba(15,76,92,0.08); border-radius: 999px; overflow: hidden; }
+    .prob-bar > span { display: block; height: 100%; background: var(--teal); }
+    .prob-row .val { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--ink-2); width: 50px; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#F4EFE6" stroke-width="2.5" stroke-linecap="round">
+          <path d="M11 16a5 5 0 0 1 10 0"/><path d="M16 11a5 5 0 0 1 0 10"/>
+        </svg>
+      </div>
+      <div>
+        <div class="tagline">Lumen Health · ML</div>
+        <h1>Lab Report Analyzer</h1>
+      </div>
+    </div>
+    <p class="meta">Drop a lab-report PDF (or pick a sample) — the model will extract the values, classify the panel, and flag anything outside the normal range.</p>
+
+    <!-- Upload -->
+    <div class="card">
+      <h2>Upload</h2>
+      <p class="meta" style="margin-top:4px">PDF only · max 10 MB.</p>
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept="application/pdf">
+        <div style="font-size: 1.05rem; color: var(--teal); font-weight: 600;">Drop a PDF here</div>
+        <div class="meta" style="margin-top:6px;">…or click to browse</div>
+        <div class="meta" style="margin-top:14px;" id="filenameLabel"></div>
+      </label>
+      <div style="display:flex; gap:8px; margin-top:14px; align-items:center;">
+        <button class="btn btn-primary" id="analyzeBtn" disabled>Analyze</button>
+        <button class="btn btn-ghost" id="resetBtn">Reset</button>
+        <span class="meta" id="status" style="margin-left:8px;"></span>
+      </div>
+    </div>
+
+    <!-- Sample picker -->
+    {% if samples %}
+    <div class="card">
+      <h2>Or pick a sample</h2>
+      <p class="meta" style="margin-top:4px">Generated reports covering each condition the model knows about.</p>
+      <div class="grid-samples">
+        {% for s in samples %}
+          <button class="sample-pill" data-sample="{{ s.url }}" data-name="{{ s.name }}">
+            <span class="name">{{ s.title }}</span>
+            <span class="meta mono">{{ s.name }}</span>
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Results -->
+    <div id="results"></div>
+
+    <div class="footer">Lumen Health · standalone ML service · educational demo</div>
+  </div>
+
+  <script>
+    const dropzone   = document.getElementById('dropzone');
+    const fileInput  = document.getElementById('fileInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const resetBtn   = document.getElementById('resetBtn');
+    const filenameLabel = document.getElementById('filenameLabel');
+    const statusLabel   = document.getElementById('status');
+    const results       = document.getElementById('results');
+
+    let chosenFile = null;
+
+    function setFile(file, label) {
+      chosenFile = file;
+      filenameLabel.textContent = label || file?.name || '';
+      analyzeBtn.disabled = !chosenFile;
+    }
+
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', e => {
+      if (e.target.files[0]) setFile(e.target.files[0]);
+    });
+
+    document.querySelectorAll('.sample-pill').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const url = btn.getAttribute('data-sample');
+        const name = btn.getAttribute('data-name');
+        statusLabel.textContent = 'Loading sample…';
+        try {
+          const resp = await fetch(url);
+          const blob = await resp.blob();
+          const file = new File([blob], name, { type: 'application/pdf' });
+          setFile(file, '📄 ' + name);
+          statusLabel.textContent = '';
+        } catch (e) {
+          statusLabel.textContent = 'Failed to load sample.';
+        }
+      });
+    });
+
+    resetBtn.addEventListener('click', () => {
+      chosenFile = null;
+      fileInput.value = '';
+      filenameLabel.textContent = '';
+      analyzeBtn.disabled = true;
+      statusLabel.textContent = '';
+      results.innerHTML = '';
+    });
+
+    analyzeBtn.addEventListener('click', async () => {
+      if (!chosenFile) return;
+      analyzeBtn.disabled = true;
+      statusLabel.textContent = 'Analyzing…';
+      results.innerHTML = '<div class="card"><div class="skeleton"></div><div class="skeleton" style="margin-top:10px;width:60%"></div></div>';
+
+      const fd = new FormData();
+      fd.append('file', chosenFile);
+      try {
+        const resp = await fetch('/api/analyze', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (!resp.ok) {
+          results.innerHTML = `<div class="card"><div class="err"><strong>${data.error || 'Analysis failed.'}</strong>${data.rawText ? `<div class='raw-text' style='margin-top:10px'>${escapeHtml(data.rawText)}</div>` : ''}</div></div>`;
+          return;
+        }
+        renderResult(data);
+      } catch (e) {
+        results.innerHTML = `<div class="card"><div class="err">Network error: ${e}</div></div>`;
+      } finally {
+        statusLabel.textContent = '';
+        analyzeBtn.disabled = false;
+      }
+    });
+
+    function renderResult(d) {
+      const urgPill = d.urgency === 'URGENT' ? 'pill pill-urgent' : (d.urgency === 'PROMPT' ? 'pill pill-prompt' : 'pill pill-routine');
+      const probsHtml = Object.entries(d.classProbabilities || {})
+        .sort((a,b) => b[1] - a[1])
+        .map(([name, p]) => `
+          <div class="prob-row">
+            <span class="label">${name}</span>
+            <span class="prob-bar"><span style="width: ${(p*100).toFixed(1)}%"></span></span>
+            <span class="val">${(p*100).toFixed(1)}%</span>
+          </div>`).join('');
+
+      const findingRow = (f, statusClass) => `
+        <tr>
+          <td><strong>${f.test}</strong> <span class="meta mono">${f.testId}</span></td>
+          <td class="mono">${f.value ?? '—'} ${f.unit}</td>
+          <td class="mono meta">${f.expectedLow} – ${f.expectedHigh} ${f.unit}</td>
+          <td><span class="pill ${statusClass}">${f.status}${f.severity !== 'normal' && f.severity !== 'unknown' ? ' · ' + f.severity : ''}</span></td>
+        </tr>`;
+
+      const abnormalRows = (d.abnormalFindings || [])
+        .map(f => findingRow(f, f.status === 'low' ? 'pill-low' : 'pill-high'))
+        .join('');
+      const normalRows = (d.normalFindings || [])
+        .map(f => findingRow(f, 'pill-normal'))
+        .join('');
+
+      results.innerHTML = `
+        <div class="card">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div>
+              <div class="ai-tag">AI Prediction</div>
+              <h2 style="margin-top:6px;">${d.predictedConditionLabel}</h2>
+              <p class="meta" style="margin-top:4px;">Confidence: <strong class="mono">${(d.confidence*100).toFixed(1)}%</strong></p>
+            </div>
+            <span class="${urgPill}">${d.urgency}</span>
+          </div>
+          <div class="summary-block">
+            <h3>Summary</h3>
+            <p style="margin: 6px 0 0;">${escapeHtml(d.summary)}</p>
+          </div>
+          <h3 style="margin-top:18px;">Plain-language explanation</h3>
+          <p style="margin-top:4px;">${escapeHtml(d.explanation || '—')}</p>
+          <h3 style="margin-top:14px;">Suggested next steps</h3>
+          <p style="margin-top:4px;">${escapeHtml(d.nextSteps || '—')}</p>
+          <p class="disclaimer">${escapeHtml(d.disclaimer)}</p>
+        </div>
+
+        <div class="card">
+          <h2>Class probabilities</h2>
+          <div style="margin-top:10px;">${probsHtml}</div>
+        </div>
+
+        ${abnormalRows ? `
+        <div class="card">
+          <h2>Abnormal findings</h2>
+          <table class="findings-table">
+            <thead><tr><th>Test</th><th>Result</th><th>Reference</th><th>Status</th></tr></thead>
+            <tbody>${abnormalRows}</tbody>
+          </table>
+        </div>` : ''}
+
+        ${normalRows ? `
+        <div class="card">
+          <h2>Normal findings</h2>
+          <table class="findings-table">
+            <thead><tr><th>Test</th><th>Result</th><th>Reference</th><th>Status</th></tr></thead>
+            <tbody>${normalRows}</tbody>
+          </table>
+        </div>` : ''}
+
+        ${d.missingTests?.length ? `
+        <div class="card">
+          <h2>Tests not found in this report</h2>
+          <p class="meta">${d.missingTests.join(', ')}</p>
+        </div>` : ''}
+
+        <div class="card">
+          <h2>What we read from your PDF</h2>
+          <pre class="raw-text">${escapeHtml(d.rawText || '')}</pre>
+        </div>
+      `;
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+  </script>
+</body>
+</html>

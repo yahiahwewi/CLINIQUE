@@ -31,6 +31,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   readonly navItems: NavItem[] = [
     { label: 'Overview',       route: '/dashboard/overview',                icon: 'home' },
     { label: 'Appointments',   route: '/dashboard/appointments',            icon: 'calendar' },
+    { label: 'Lab analyzer',   route: '/dashboard/lab-analyzer',            icon: 'flask' },
     { label: 'My profile',     route: '/dashboard/profile/patient',         icon: 'id',        roles: ['ROLE_USER'] },
     { label: 'My history',     route: '/dashboard/history',                 icon: 'book',      roles: ['ROLE_USER'] },
     { label: 'My profile',     route: '/dashboard/profile/doctor',          icon: 'id',        roles: ['ROLE_DOCTOR'] },

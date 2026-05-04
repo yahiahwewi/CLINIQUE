@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+
+# runtime output
+flask-run.log
+*.log
+
+# generated artifacts
+model/lab_model.pkl
+model/feature_columns.json
+model/training_metrics.json
+sample_pdfs/*.pdf
+data/synthetic_lab_data.csv
